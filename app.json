@@ -1,27 +1,30 @@
 {
   "expo": {
-    "name": "lalmai-rent-car",
+    "name": "Lalmai Upozila Rent A Car",
     "slug": "lalmai-rent-car",
     "version": "1.0.0",
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "lalmairentcar",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.shopnil.lalmairentcar",
+      "icon": "./assets/images/icon.png"
     },
     "android": {
+      "package": "com.shopnil.lalmairentcar",
+      "versionCode": 1,
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#1E293B",
+        "foregroundImage": "./assets/images/icon.png"
       },
       "predictiveBackGestureEnabled": false
-    },
-    "web": {
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
@@ -34,11 +37,29 @@
             "imageWidth": 76
           }
         }
+      ],
+      "@react-native-google-signin/google-signin",
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": false,
+            "allowBackup": false
+          }
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "49951e7a-10da-4709-b593-ee69febc1651"
+      }
+    },
+    "owner": "lalmairentcar"
   }
 }
