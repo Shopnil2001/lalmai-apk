@@ -264,28 +264,45 @@ export const authService = {
       // 1. Verify that user exists in database
       let userProfile: UserProfile | null = null;
       const { doc, getDoc, collection, query, getDocs } = require('firebase/firestore');
-      const mappingDoc = await getDoc(doc(db, 'phone_mappings', formattedPhone));
-      if (mappingDoc.exists()) {
-        const uid = mappingDoc.data().uid;
-        const userDoc = await getDoc(doc(db, 'users', uid));
-        if (userDoc.exists()) {
-          userProfile = userDoc.data() as UserProfile;
+      
+      try {
+        // Primary lookup: exact 11-digit formatted phone (e.g. 01788398614)
+        let mappingDoc = await getDoc(doc(db, 'phone_mappings', formattedPhone));
+        
+        // Secondary lookup: try 10-digit key without leading 0 or vice versa
+        if (!mappingDoc.exists()) {
+          const altKey = formattedPhone.startsWith('0') ? formattedPhone.substring(1) : ('0' + formattedPhone);
+          mappingDoc = await getDoc(doc(db, 'phone_mappings', altKey));
         }
-      } else {
-        // Fallback: check users collection by formatting phone number
-        const q = query(collection(db, 'users'));
-        const snapshot = await getDocs(q);
-        const found = snapshot.docs.find((doc: any) => {
-          const u = doc.data();
-          return u.phone && u.phone.replace(/\D/g, '').slice(-11) === formattedPhone;
-        });
-        if (found) {
-          userProfile = found.data() as UserProfile;
+
+        if (mappingDoc.exists()) {
+          const uid = mappingDoc.data().uid;
+          const userDoc = await getDoc(doc(db, 'users', uid));
+          if (userDoc.exists()) {
+            userProfile = userDoc.data() as UserProfile;
+          }
+        } else {
+          // Fallback query for authenticated callers or dev mode
+          try {
+            const q = query(collection(db, 'users'));
+            const snapshot = await getDocs(q);
+            const found = snapshot.docs.find((docItem: any) => {
+              const u = docItem.data();
+              return u.phone && u.phone.replace(/\D/g, '').slice(-11) === formattedPhone;
+            });
+            if (found) {
+              userProfile = found.data() as UserProfile;
+            }
+          } catch (queryErr) {
+            // Unauthenticated list queries will be caught here safely without breaking
+          }
         }
+      } catch (lookupErr) {
+        console.warn('[sendPhoneOTP] Error checking phone mapping/profile:', lookupErr);
       }
       
       if (!userProfile) {
-        throw new Error('No registered account found with this phone number. Please contact the administrator.');
+        throw new Error(`No registered account found with phone number ${phoneNumber}. Please contact the administrator to register your account.`);
       }
       
       if (userProfile.status === 'suspended') {

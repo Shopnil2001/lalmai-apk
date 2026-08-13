@@ -42,7 +42,8 @@ service cloud.firestore {
 
     // 1. Users Profile Collection
     match /users/{userId} {
-      allow read: if isAuthenticated();
+      allow get: if true;
+      allow list: if isAuthenticated();
       
       // Allow users to create their own profile during sign-up, or allow Super Admin to write
       allow create: if isAuthenticated() && (request.auth.uid == userId || isSuperAdmin());
