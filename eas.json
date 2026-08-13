@@ -1,0 +1,64 @@
+{
+  "cli": {
+    "version": ">= 10.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_USE_MOCK_DATA": "false",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyBYpSNTfsWCJYSfhLFMbrk9hzvZXIIYhcE",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "lalmai-rent-car.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "lalmai-rent-car",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "lalmai-rent-car.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "207439717600",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:207439717600:web:7fc974d33efec5d7739c85",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "207439717600-pnduc75qrmhl5j2lqaq6ad73tla67o6k.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "207439717600-ampsmcmpt36fd25jmtr2nbpfg70q2dmi.apps.googleusercontent.com",
+        "EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME": "dlc1xc35t",
+        "EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET": "LRC-image"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_USE_MOCK_DATA": "false",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyBYpSNTfsWCJYSfhLFMbrk9hzvZXIIYhcE",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "lalmai-rent-car.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "lalmai-rent-car",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "lalmai-rent-car.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "207439717600",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:207439717600:web:7fc974d33efec5d7739c85",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "207439717600-pnduc75qrmhl5j2lqaq6ad73tla67o6k.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "207439717600-ampsmcmpt36fd25jmtr2nbpfg70q2dmi.apps.googleusercontent.com",
+        "EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME": "dlc1xc35t",
+        "EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET": "LRC-image"
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_USE_MOCK_DATA": "false",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyBYpSNTfsWCJYSfhLFMbrk9hzvZXIIYhcE",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "lalmai-rent-car.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "lalmai-rent-car",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "lalmai-rent-car.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "207439717600",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:207439717600:web:7fc974d33efec5d7739c85",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "207439717600-pnduc75qrmhl5j2lqaq6ad73tla67o6k.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "207439717600-ampsmcmpt36fd25jmtr2nbpfg70q2dmi.apps.googleusercontent.com",
+        "EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME": "dlc1xc35t",
+        "EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET": "LRC-image"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
