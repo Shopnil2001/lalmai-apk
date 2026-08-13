@@ -61,12 +61,15 @@ export default function MemberDetail() {
   const [editEmail, setEditEmail] = useState('');
   const [editDrivingLicense, setEditDrivingLicense] = useState('');
   const [editRegistrationNumber, setEditRegistrationNumber] = useState('');
+  const [editAddress, setEditAddress] = useState('');
+  const [editCarType, setEditCarType] = useState<UserProfile['carType']>('none');
 
   const [yearlyFeeInput, setYearlyFeeInput] = useState('1200');
   
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showAreaDropdown, setShowAreaDropdown] = useState(false);
+  const [showCarDropdown, setShowCarDropdown] = useState(false);
 
   // Payment modal state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -152,6 +155,8 @@ export default function MemberDetail() {
         setEditEmail(found.email || '');
         setEditDrivingLicense(found.drivingLicense || '');
         setEditRegistrationNumber(found.registrationNumber || '');
+        setEditAddress(found.address || '');
+        setEditCarType(found.carType || 'none');
       } else {
         Alert.alert('Error', 'Member not found.', [
           {
@@ -209,6 +214,8 @@ export default function MemberDetail() {
           email: editEmail.trim().toLowerCase(),
           drivingLicense: editDrivingLicense.trim(),
           registrationNumber: editRegistrationNumber.trim(),
+          carType: editCarType,
+          address: editAddress.trim(),
           role: selectedRole,
           status: selectedStatus,
           yearlyFee: feeNum,
@@ -224,6 +231,8 @@ export default function MemberDetail() {
           email: editEmail.trim().toLowerCase(),
           drivingLicense: editDrivingLicense.trim(),
           registrationNumber: editRegistrationNumber.trim(),
+          carType: editCarType,
+          address: editAddress.trim(),
           yearlyFee: feeNum,
           area: selectedArea || undefined,
         };
@@ -673,6 +682,61 @@ export default function MemberDetail() {
               leftIcon="car-outline"
             />
 
+            {/* Car Type Dropdown Selector */}
+            <View style={styles.selectorContainer}>
+              <Text style={styles.selectorLabel}>Car Type / Owner Status</Text>
+              <TouchableOpacity 
+                activeOpacity={0.8}
+                onPress={() => {
+                  setShowCarDropdown(!showCarDropdown);
+                  setShowRoleDropdown(false);
+                  setShowStatusDropdown(false);
+                  setShowAreaDropdown(false);
+                }}
+                style={styles.selectorBox}
+              >
+                <Text style={styles.selectorText}>
+                  {editCarType === 'none' ? 'None (Not a Car Owner)' : editCarType}
+                </Text>
+                <Ionicons name={showCarDropdown ? "chevron-up" : "chevron-down"} size={20} color={Colors.light.textSecondary} />
+              </TouchableOpacity>
+
+              {showCarDropdown && (
+                <View style={styles.dropdown}>
+                  {['none', 'NOAH', 'TRX', 'Private Car'].map((c, idx) => (
+                    <TouchableOpacity
+                      key={idx}
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        setEditCarType(c as any);
+                        setShowCarDropdown(false);
+                      }}
+                      style={[
+                        styles.dropdownItem,
+                        editCarType === c && styles.dropdownItemActive
+                      ]}
+                    >
+                      <Text style={[
+                        styles.dropdownItemText,
+                        editCarType === c && styles.dropdownItemTextActive
+                      ]}>
+                        {c === 'none' ? 'None (Not a Car Owner)' : c}
+                      </Text>
+                      {editCarType === c && <Ionicons name="checkmark" size={18} color={Colors.light.accent} />}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            <Input
+              label="Detailed Address"
+              placeholder="Enter detailed address"
+              value={editAddress}
+              onChangeText={setEditAddress}
+              leftIcon="location-outline"
+            />
+
             <Input
               label="Assigned Yearly Fee Rate (৳)"
               placeholder="e.g. 1200"
@@ -691,6 +755,7 @@ export default function MemberDetail() {
                   setShowAreaDropdown(!showAreaDropdown);
                   setShowRoleDropdown(false);
                   setShowStatusDropdown(false);
+                  setShowCarDropdown(false);
                 }}
                 style={styles.selectorBox}
               >
@@ -738,6 +803,7 @@ export default function MemberDetail() {
                       setShowRoleDropdown(!showRoleDropdown);
                       setShowStatusDropdown(false);
                       setShowAreaDropdown(false);
+                      setShowCarDropdown(false);
                     }}
                     style={styles.selectorBox}
                   >
@@ -780,6 +846,7 @@ export default function MemberDetail() {
                       setShowStatusDropdown(!showStatusDropdown);
                       setShowRoleDropdown(false);
                       setShowAreaDropdown(false);
+                      setShowCarDropdown(false);
                     }}
                     style={styles.selectorBox}
                   >
