@@ -51,12 +51,12 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
 
   try {
     const tokenData = await Notifications.getExpoPushTokenAsync({
-      projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID ?? 'f0fc3243-6428-47db-a41b-6c5243136f14',
+      projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID ?? '49951e7a-10da-4709-b593-ee69febc1651',
     });
     console.log('[NotificationService] Expo push token:', tokenData.data);
     return tokenData.data;
-  } catch (err) {
-    console.error('[NotificationService] Failed to get push token:', err);
+  } catch (err: any) {
+    console.warn('[NotificationService] Push notification token unavailable:', err?.message || err);
     return null;
   }
 }

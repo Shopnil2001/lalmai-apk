@@ -309,6 +309,35 @@ export default function MemberDetail() {
     }
   };
 
+  const handleDeletePayment = (payment: PaymentRecord) => {
+    if (!canDeletePayment) {
+      Alert.alert('Permission Denied', 'You do not have permission to delete payment records.');
+      return;
+    }
+
+    Alert.alert(
+      'Delete Payment Record',
+      `Are you sure you want to delete this payment record of ৳${payment.amount} dated ${payment.dateStr}? This will update the member balance.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await dbService.deletePayment(payment.id);
+              Alert.alert('Success', 'Payment record deleted.');
+              loadMember();
+            } catch (error) {
+              console.error('Failed to delete payment:', error);
+              Alert.alert('Error', 'Failed to delete payment record.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const handleDeleteMember = () => {
     if (!member) return;
 
@@ -405,6 +434,7 @@ export default function MemberDetail() {
   const dueAmount = totalDues - totalPaid;
 
   const canRecordPayment = user?.role === 'Super Admin' || (user?.role === 'Admin' && (hasPermission('logPayment') || hasPermission('generateDues')));
+  const canDeletePayment = user?.role === 'Super Admin' || (user?.role === 'Admin' && (hasPermission('logPayment') || hasPermission('generateDues')));
   const canViewPayments = user?.role === 'Super Admin' || (user?.role === 'Admin' && (hasPermission('viewPayment') || hasPermission('viewDues')));
   const canToggleAttendance = user?.role === 'Super Admin' || (user?.role === 'Admin' && hasPermission('takeAttendance'));
 
@@ -613,7 +643,19 @@ export default function MemberDetail() {
                 <View key={p.id || idx} style={styles.paymentLogItem}>
                   <View style={styles.paymentLogHeader}>
                     <Text style={styles.paymentLogAmount}>+৳{p.amount}</Text>
-                    <Text style={styles.paymentLogDate}>{p.dateStr}</Text>
+                    <View style={styles.paymentLogMetaRow}>
+                      <Text style={styles.paymentLogDate}>{p.dateStr}</Text>
+                      {canDeletePayment && (
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          onPress={() => handleDeletePayment(p)}
+                          style={styles.deletePaymentBtn}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                          <Ionicons name="trash-outline" size={16} color={Colors.light.error} />
+                        </TouchableOpacity>
+                      )}
+                    </View>
                   </View>
                   {p.note ? <Text style={styles.paymentLogNote}>{p.note}</Text> : null}
                 </View>
@@ -1392,6 +1434,16 @@ const styles = StyleSheet.create({
   paymentLogDate: {
     ...Typography.bodySmall,
     color: Colors.light.textLight,
+  },
+  paymentLogMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  deletePaymentBtn: {
+    padding: 6,
+    borderRadius: 6,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
   },
   paymentLogNote: {
     ...Typography.bodySmall,

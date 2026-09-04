@@ -280,6 +280,12 @@ export const authService = {
           const userDoc = await getDoc(doc(db, 'users', uid));
           if (userDoc.exists()) {
             userProfile = userDoc.data() as UserProfile;
+          } else {
+            // Check if user doc exists under formattedPhone ID
+            const phoneDoc = await getDoc(doc(db, 'users', formattedPhone));
+            if (phoneDoc.exists()) {
+              userProfile = phoneDoc.data() as UserProfile;
+            }
           }
         } else {
           // Fallback query for authenticated callers or dev mode
@@ -321,9 +327,9 @@ export const authService = {
       
       // 4. Send SMS via BulkSMSBD API
       const { smsService } = require('./smsService');
-      const sent = await smsService.sendOTP(formattedPhone, otp);
-      if (!sent) {
-        throw new Error('Failed to send verification SMS via SMS Gateway. Please try again.');
+      const smsResult = await smsService.sendOTP(formattedPhone, otp);
+      if (!smsResult.success) {
+        throw new Error(smsResult.error || 'Failed to send verification SMS via SMS Gateway. Please try again.');
       }
       
       return {
@@ -356,10 +362,74 @@ export const authService = {
           const derivedPwd = `lrc_secure_otp_${formattedPhone.slice(-10)}_2026_salt`;
           
           const { signInWithEmailAndPassword } = require('firebase/auth');
-          const userCredential = await signInWithEmailAndPassword(auth, derivedEmail, derivedPwd);
-          const uid = userCredential.user.uid;
+          let userCredential;
+          try {
+            userCredential = await signInWithEmailAndPassword(auth, derivedEmail, derivedPwd);
+          } catch (signInErr: any) {
+            if (signInErr.code === 'auth/user-not-found' || signInErr.code === 'auth/invalid-credential' || signInErr.code === 'auth/wrong-password') {
+              // Primary recovery: check phone_mappings directly by doc ID (allowed unauthenticated)
+              let oldUser: UserProfile | null = null;
+              try {
+                const mapDoc = await getDoc(doc(db, 'phone_mappings', formattedPhone));
+                if (mapDoc.exists() && mapDoc.data()?.uid) {
+                  const uDoc = await getDoc(doc(db, 'users', mapDoc.data().uid));
+                  if (uDoc.exists()) {
+                    oldUser = uDoc.data() as UserProfile;
+                  }
+                }
+              } catch (mapLookupErr) {
+                console.warn('[confirm] Error checking phone mapping during recovery:', mapLookupErr);
+              }
+
+              // Fallback query if permitted
+              if (!oldUser) {
+                try {
+                  const { collection, query, getDocs } = require('firebase/firestore');
+                  const q = query(collection(db, 'users'));
+                  const snapshot = await getDocs(q);
+                  const found = snapshot.docs.find((doc: any) => {
+                    const u = doc.data() as UserProfile;
+                    return u.phone && u.phone.replace(/\D/g, '').slice(-11) === formattedPhone;
+                  });
+                  if (found) {
+                    oldUser = found.data() as UserProfile;
+                  }
+                } catch (queryErr) {}
+              }
+
+              if (oldUser) {
+                const { dbService } = require('./dbService');
+                await dbService.migrateUserToPhoneAuth(oldUser);
+                userCredential = await signInWithEmailAndPassword(auth, derivedEmail, derivedPwd);
+              } else {
+                throw signInErr;
+              }
+            } else {
+              throw signInErr;
+            }
+          }
           
-          const userDoc = await getDoc(doc(db, 'users', uid));
+          const uid = userCredential.user.uid;
+          let userDoc = await getDoc(doc(db, 'users', uid));
+          if (!userDoc.exists()) {
+            let oldUser: UserProfile | null = null;
+            try {
+              const mapDoc = await getDoc(doc(db, 'phone_mappings', formattedPhone));
+              if (mapDoc.exists() && mapDoc.data()?.uid) {
+                const uDoc = await getDoc(doc(db, 'users', mapDoc.data().uid));
+                if (uDoc.exists()) {
+                  oldUser = uDoc.data() as UserProfile;
+                }
+              }
+            } catch (err) {}
+
+            if (oldUser) {
+              const { dbService } = require('./dbService');
+              await dbService.migrateUserToPhoneAuth(oldUser);
+              userDoc = await getDoc(doc(db, 'users', uid));
+            }
+          }
+          
           if (!userDoc.exists()) {
             throw new Error('User profile record not found.');
           }

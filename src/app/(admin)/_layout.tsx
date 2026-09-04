@@ -23,7 +23,6 @@ export default function AdminLayout() {
       <Stack.Screen name="events/[id]/attendance" />
       <Stack.Screen name="fees/index" />
       <Stack.Screen name="announcements/create" />
-      <Stack.Screen name="activities/create" />
       <Stack.Screen name="landing-settings" />
     </Stack>
   );

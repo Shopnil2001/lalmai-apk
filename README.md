@@ -9,16 +9,16 @@ Official mobile application for Lalmai Rent Car service, built with React Native
 Scan the QR code below using your phone camera or QR scanner to download the latest Android application directly to your device:
 
 <div align="center">
-  <img src="./qrcode.png" alt="Lalmai Rent Car APK Permanent Download QR Code" width="260" height="260" />
+  <img src="./download-qr-card.png" alt="Lalmai Rent Car APK Permanent Download Card & QR Code" width="380" />
 
   <br/><br/>
 
   [![Download APK](https://img.shields.io/badge/Download-Lalmai%20Rent%20Car%20APK-22c55e?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Shopnil2001/lalmai-apk/raw/main/lalmai-rent-car.apk)
 </div>
 
-### 🔗 Permanent Download Link
+### 🔗 Permanent Download Links
 - **Direct Download URL:** [https://github.com/Shopnil2001/lalmai-apk/raw/main/lalmai-rent-car.apk](https://github.com/Shopnil2001/lalmai-apk/raw/main/lalmai-rent-car.apk)
-- **Fallback URL:** [https://raw.githubusercontent.com/Shopnil2001/lalmai-apk/main/lalmai-rent-car.apk](https://raw.githubusercontent.com/Shopnil2001/lalmai-apk/main/lalmai-rent-car.apk)
+- **Fast CDN Fallback:** [https://raw.githubusercontent.com/Shopnil2001/lalmai-apk/main/lalmai-rent-car.apk](https://raw.githubusercontent.com/Shopnil2001/lalmai-apk/main/lalmai-rent-car.apk)
 
 ---
 

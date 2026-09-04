@@ -974,6 +974,11 @@ export const mockDB = {
     await db.set(KEYS.PAYMENTS, allPayments);
     return newPayment;
   },
+  deletePayment: async (paymentId: string) => {
+    const allPayments = await mockDB.getPayments();
+    const updated = allPayments.filter(p => p.id !== paymentId);
+    await db.set(KEYS.PAYMENTS, updated);
+  },
 
   // USER CREATION BY ADMIN
   createUserByAdmin: async (profile: Omit<UserProfile, 'uid' | 'joinedAt'>, password?: string) => {

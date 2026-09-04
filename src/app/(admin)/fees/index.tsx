@@ -27,7 +27,7 @@ import { calculateTotalDues, calculateYearlyDues, calculateCumulativeDues } from
 
 export default function FeeCollections() {
   const router = useRouter();
-  const { user, isSuperAdmin } = useAuth();
+  const { user, isSuperAdmin, hasPermission } = useAuth();
   const { showToast } = useToast();
   
   const [members, setMembers] = useState<UserProfile[]>([]);
@@ -35,21 +35,23 @@ export default function FeeCollections() {
   const [otherIncomeList, setOtherIncomeList] = useState<OtherIncomeRecord[]>([]);
   const [expensesList, setExpensesList] = useState<ExpenseRecord[]>([]);
   
-  const [activeTab, setActiveTab] = useState<'member' | 'dues_summary' | 'income' | 'expense'>('member');
+  const [activeTab, setActiveTab] = useState<'member' | 'payments' | 'dues_summary' | 'income' | 'expense'>('member');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const canDeletePayment = isSuperAdmin || hasPermission('logPayment') || hasPermission('generateDues');
   
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Yearly dues state
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
-  const [showYearPickerModal, setShowYearPickerModal] = useState(false);
-
   const currentYear = new Date().getFullYear();
-  const yearsRange: number[] = [];
-  for (let y = 2020; y <= currentYear + 2; y++) {
-    yearsRange.push(y);
-  }
+  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+  const [showYearPickerModal, setShowYearPickerModal] = useState(false);
+  const [pickerDecade, setPickerDecade] = useState<number>(Math.floor(currentYear / 10) * 10);
+  const [customYearInput, setCustomYearInput] = useState('');
+
+  const defaultPillYears = [2022, 2023, 2024, 2025, 2026, 2027, 2028];
+  const dynamicPills = Array.from(new Set([...defaultPillYears, selectedYear])).sort((a, b) => a - b);
 
   // Payment instructions state
   const [paymentInstructions, setPaymentInstructions] = useState('');
@@ -195,6 +197,35 @@ export default function FeeCollections() {
     } finally {
       setRecordingPayment(false);
     }
+  };
+
+  const handleDeletePayment = (payment: PaymentRecord, memberName?: string) => {
+    if (!canDeletePayment) {
+      Alert.alert('Permission Denied', 'You do not have permission to delete payment records.');
+      return;
+    }
+
+    Alert.alert(
+      'Delete Payment Record',
+      `Are you sure you want to delete this payment record of ৳${payment.amount}${memberName ? ` for "${memberName}"` : ''} dated ${payment.dateStr}? This action will update the member balance.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await dbService.deletePayment(payment.id);
+              showToast('Payment record deleted.', 'success');
+              loadCollections();
+            } catch (error) {
+              console.error(error);
+              showToast('Failed to delete payment record.', 'error');
+            }
+          }
+        }
+      ]
+    );
   };
 
   // Other Income Handlers
@@ -391,6 +422,31 @@ export default function FeeCollections() {
     );
   });
 
+  const filteredPayments = payments
+    .filter(p => {
+      const member = members.find(m => m.uid === p.userId);
+      const isScoped = members.some(m => m.uid === p.userId);
+      if (!isScoped && user?.role === 'Admin') return false;
+
+      const query = searchQuery.toLowerCase();
+      const memberName = member?.name?.toLowerCase() || '';
+      const memberPhone = member?.phone || '';
+      const memberArea = member?.area?.toLowerCase() || '';
+      const note = p.note?.toLowerCase() || '';
+      const dateStr = p.dateStr || '';
+      const amountStr = String(p.amount);
+
+      return (
+        memberName.includes(query) ||
+        memberPhone.includes(query) ||
+        memberArea.includes(query) ||
+        note.includes(query) ||
+        dateStr.includes(query) ||
+        amountStr.includes(query)
+      );
+    })
+    .sort((a, b) => (b.dateStr || '').localeCompare(a.dateStr || '') || (b.markedAt || 0) - (a.markedAt || 0));
+
   const filteredOtherIncome = otherIncomeList.filter(inc => {
     const query = searchQuery.toLowerCase();
     return (
@@ -435,10 +491,6 @@ export default function FeeCollections() {
   }, 0);
 
   const getEndDateStr = (year: number) => {
-    const currentYear = new Date().getFullYear();
-    if (year >= currentYear) {
-      return new Date().toISOString().split('T')[0];
-    }
     return `${year}-12-31`;
   };
 
@@ -608,6 +660,65 @@ export default function FeeCollections() {
     );
   };
 
+  const renderPaymentItem = ({ item }: { item: PaymentRecord }) => {
+    const member = members.find(m => m.uid === item.userId);
+    return (
+      <Card style={styles.ledgerCard} elevation="sm">
+        <View style={styles.cardHeaderRow}>
+          <View style={{ flex: 1, paddingRight: Spacing.sm }}>
+            <Text style={styles.memberNameText}>
+              {member?.name || 'Member Record'}
+              {member?.area ? ` • ${member.area}` : ''}
+            </Text>
+            {member?.phone ? (
+              <Text style={styles.memberRateText}>{member.phone}</Text>
+            ) : null}
+          </View>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={[styles.statValue, styles.paidValue, { fontSize: 18 }]}>
+              +৳{item.amount.toLocaleString()}
+            </Text>
+            <Text style={styles.paymentLogDate}>{item.dateStr}</Text>
+          </View>
+        </View>
+
+        {item.note ? (
+          <View style={styles.paymentNoteContainer}>
+            <Ionicons name="document-text-outline" size={14} color={Colors.light.textSecondary} />
+            <Text style={styles.paymentNoteText}>{item.note}</Text>
+          </View>
+        ) : null}
+
+        <View style={[styles.actionButtons, { marginTop: Spacing.sm }]}>
+          {member && (
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => router.push({
+                pathname: '/(admin)/members/[id]',
+                params: { id: member.uid }
+              })}
+              style={[styles.actionBtn, styles.profileBtn, { flex: 1 }]}
+            >
+              <Ionicons name="person-outline" size={14} color={Colors.light.primary} />
+              <Text style={styles.profileBtnText}>Profile & History</Text>
+            </TouchableOpacity>
+          )}
+
+          {canDeletePayment && (
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => handleDeletePayment(item, member?.name)}
+              style={[styles.actionBtn, styles.deletePaymentRecordBtn, { flex: member ? undefined : 1 }]}
+            >
+              <Ionicons name="trash-outline" size={14} color={Colors.light.error} />
+              <Text style={styles.deletePaymentRecordBtnText}>Delete Record</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </Card>
+    );
+  };
+
   const renderOtherIncomeItem = ({ item }: { item: OtherIncomeRecord }) => {
     return (
       <Card style={styles.ledgerCard} elevation="sm">
@@ -709,6 +820,21 @@ export default function FeeCollections() {
 
             <TouchableOpacity
               activeOpacity={0.8}
+              onPress={() => { setActiveTab('payments'); setSearchQuery(''); }}
+              style={[styles.tabButton, activeTab === 'payments' && styles.activeTabButton]}
+            >
+              <Ionicons 
+                name="receipt" 
+                size={14} 
+                color={activeTab === 'payments' ? '#FFFFFF' : Colors.light.textSecondary} 
+              />
+              <Text style={[styles.tabButtonText, activeTab === 'payments' && styles.activeTabButtonText]}>
+                Payment Logs
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
               onPress={() => { setActiveTab('dues_summary'); setSearchQuery(''); }}
               style={[styles.tabButton, activeTab === 'dues_summary' && styles.activeTabButton]}
             >
@@ -762,9 +888,9 @@ export default function FeeCollections() {
         </View>
       ) : (
         <FlatList
-          data={(activeTab === 'member' ? filteredMembers : activeTab === 'dues_summary' ? filteredMembers : activeTab === 'income' ? filteredOtherIncome : filteredExpenses) as any[]}
+          data={(activeTab === 'member' ? filteredMembers : activeTab === 'payments' ? filteredPayments : activeTab === 'dues_summary' ? filteredMembers : activeTab === 'income' ? filteredOtherIncome : filteredExpenses) as any[]}
           keyExtractor={(item: any) => item.id || item.uid}
-          renderItem={(activeTab === 'member' ? renderMemberLedgerItem : activeTab === 'dues_summary' ? renderYearlyDueItem : activeTab === 'income' ? renderOtherIncomeItem : renderExpenseItem) as any}
+          renderItem={(activeTab === 'member' ? renderMemberLedgerItem : activeTab === 'payments' ? renderPaymentItem : activeTab === 'dues_summary' ? renderYearlyDueItem : activeTab === 'income' ? renderOtherIncomeItem : renderExpenseItem) as any}
           contentContainerStyle={styles.listContent}
           refreshControl={
             <RefreshControl
@@ -825,17 +951,89 @@ export default function FeeCollections() {
                 </>
               )}
 
+              {activeTab === 'payments' && (
+                <>
+                  <Card style={styles.statsCard} elevation="md">
+                    <Text style={styles.statsCardTitle}>Total Collections Logged</Text>
+                    <Text style={[styles.statsCardAmount, { color: Colors.light.success }]}>
+                      ৳{totalPaidAll.toLocaleString()}
+                    </Text>
+                    <Text style={styles.statsCardSubtitle}>
+                      {filteredPayments.length} payment {filteredPayments.length === 1 ? 'record' : 'records'} logged
+                    </Text>
+                  </Card>
+
+                  <Text style={styles.listSectionTitle}>Payment Records History</Text>
+                  
+                  <Input
+                    placeholder="Search payments by member, phone, note, or date..."
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    leftIcon="search-outline"
+                    containerStyle={styles.searchInput}
+                  />
+                </>
+              )}
+
               {activeTab === 'dues_summary' && (
                 <>
                   {/* Selectable Year Row */}
                   <View style={styles.yearRowWrapper}>
-                    <Text style={styles.yearRowLabel}>Select Year</Text>
+                    <View style={styles.yearHeaderRow}>
+                      <Text style={styles.yearRowLabel}>Select Year</Text>
+                      <TouchableOpacity
+                        style={styles.openPickerBtn}
+                        onPress={() => {
+                          setPickerDecade(Math.floor(selectedYear / 10) * 10);
+                          setShowYearPickerModal(true);
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="calendar-outline" size={15} color={Colors.light.accent} />
+                        <Text style={styles.openPickerBtnText}>Pick Any Year</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* Stepper Navigation bar: < Prev | Year: 2026 | Next > */}
+                    <View style={styles.yearStepperBar}>
+                      <TouchableOpacity
+                        style={styles.yearStepBtn}
+                        onPress={() => setSelectedYear(prev => prev - 1)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="chevron-back" size={18} color={Colors.light.text} />
+                        <Text style={styles.yearStepBtnText}>{selectedYear - 1}</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.activeYearBadge}
+                        onPress={() => {
+                          setPickerDecade(Math.floor(selectedYear / 10) * 10);
+                          setShowYearPickerModal(true);
+                        }}
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons name="calendar" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                        <Text style={styles.activeYearBadgeValue}>{selectedYear}</Text>
+                        <Ionicons name="chevron-down" size={14} color="#FFFFFF" style={{ marginLeft: 6 }} />
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.yearStepBtn}
+                        onPress={() => setSelectedYear(prev => prev + 1)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.yearStepBtnText}>{selectedYear + 1}</Text>
+                        <Ionicons name="chevron-forward" size={18} color={Colors.light.text} />
+                      </TouchableOpacity>
+                    </View>
+
                     <ScrollView
                       horizontal
                       showsHorizontalScrollIndicator={false}
                       contentContainerStyle={styles.yearRowScroll}
                     >
-                      {yearsRange.map((yr) => (
+                      {dynamicPills.map((yr) => (
                         <TouchableOpacity
                           key={yr}
                           activeOpacity={0.8}
@@ -853,6 +1051,17 @@ export default function FeeCollections() {
                           </Text>
                         </TouchableOpacity>
                       ))}
+                      <TouchableOpacity
+                        activeOpacity={0.8}
+                        onPress={() => {
+                          setPickerDecade(Math.floor(selectedYear / 10) * 10);
+                          setShowYearPickerModal(true);
+                        }}
+                        style={[styles.yearRowButton, styles.moreYearsButton]}
+                      >
+                        <Ionicons name="ellipsis-horizontal-circle-outline" size={16} color={Colors.light.accent} style={{ marginRight: 4 }} />
+                        <Text style={[styles.yearRowButtonText, { color: Colors.light.accent }]}>More</Text>
+                      </TouchableOpacity>
                     </ScrollView>
                   </View>
 
@@ -961,9 +1170,11 @@ export default function FeeCollections() {
                 name={
                   activeTab === 'member' || activeTab === 'dues_summary'
                     ? "people-outline" 
-                    : activeTab === 'income' 
-                      ? "cash-outline" 
-                      : "trending-down-outline"
+                    : activeTab === 'payments'
+                      ? "receipt-outline"
+                      : activeTab === 'income' 
+                        ? "cash-outline" 
+                        : "trending-down-outline"
                 } 
                 size={48} 
                 color={Colors.light.textLight} 
@@ -971,9 +1182,11 @@ export default function FeeCollections() {
               <Text style={styles.emptyText}>
                 {activeTab === 'member' || activeTab === 'dues_summary'
                   ? "No members found matching query." 
-                  : activeTab === 'income' 
-                    ? "No other income records found." 
-                    : "No expenses found."}
+                  : activeTab === 'payments'
+                    ? "No payment records found."
+                    : activeTab === 'income' 
+                      ? "No other income records found." 
+                      : "No expenses found."}
               </Text>
             </View>
           }
@@ -1229,40 +1442,119 @@ export default function FeeCollections() {
       >
         <View style={styles.modalOverlay}>
           <Card style={styles.modalCard} elevation="lg">
-            <Text style={styles.modalTitle}>Select Year</Text>
-            <Text style={styles.modalSubtitle}>Pick a calendar year to view dues records</Text>
-            
-            <ScrollView style={styles.yearScrollContainer}>
-              {yearsRange.map((yr) => (
-                <TouchableOpacity
-                  key={yr}
-                  activeOpacity={0.7}
-                  onPress={() => {
-                    setSelectedYear(yr);
-                    setShowYearPickerModal(false);
-                  }}
-                  style={[
-                    styles.yearSelectorItem,
-                    selectedYear === yr && styles.yearSelectorItemActive
-                  ]}
-                >
-                  <Text style={[
-                    styles.yearSelectorItemText,
-                    selectedYear === yr && styles.yearSelectorItemTextActive
-                  ]}>{yr}</Text>
-                  {selectedYear === yr && (
-                    <Ionicons name="checkmark-circle" size={20} color={Colors.light.accent} />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            <View style={styles.pickerHeader}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.modalTitle}>Select Year</Text>
+                <Text style={styles.modalSubtitle}>Pick any calendar year to view dues summary</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowYearPickerModal(false)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="close-circle-outline" size={26} color={Colors.light.textSecondary} />
+              </TouchableOpacity>
+            </View>
 
-            <Button
-              title="Close"
-              variant="outline"
-              onPress={() => setShowYearPickerModal(false)}
-              style={{ marginTop: Spacing.md }}
-            />
+            {/* Decade Navigation */}
+            <View style={styles.decadeNavRow}>
+              <TouchableOpacity
+                style={styles.decadeNavBtn}
+                onPress={() => setPickerDecade(prev => prev - 10)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="chevron-back" size={20} color={Colors.light.text} />
+              </TouchableOpacity>
+              <Text style={styles.decadeNavTitle}>{pickerDecade} – {pickerDecade + 9}</Text>
+              <TouchableOpacity
+                style={styles.decadeNavBtn}
+                onPress={() => setPickerDecade(prev => prev + 10)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="chevron-forward" size={20} color={Colors.light.text} />
+              </TouchableOpacity>
+            </View>
+
+            {/* 10-Year Grid */}
+            <View style={styles.yearsGrid}>
+              {Array.from({ length: 10 }, (_, i) => pickerDecade + i).map((yr) => {
+                const isSelected = selectedYear === yr;
+                const isCurrent = currentYear === yr;
+                return (
+                  <TouchableOpacity
+                    key={yr}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      setSelectedYear(yr);
+                      setShowYearPickerModal(false);
+                    }}
+                    style={[
+                      styles.yearGridItem,
+                      isSelected && styles.yearGridItemActive,
+                      !isSelected && isCurrent && styles.yearGridItemCurrent
+                    ]}
+                  >
+                    <Text style={[
+                      styles.yearGridItemText,
+                      isSelected && styles.yearGridItemTextActive,
+                      !isSelected && isCurrent && styles.yearGridItemTextCurrent
+                    ]}>
+                      {yr}
+                    </Text>
+                    {isSelected && (
+                      <Ionicons name="checkmark-circle" size={14} color="#FFFFFF" style={{ marginLeft: 2 }} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Direct Year Input */}
+            <View style={styles.customYearRow}>
+              <Input
+                placeholder="Or enter year (e.g. 2035)"
+                value={customYearInput}
+                onChangeText={setCustomYearInput}
+                keyboardType="number-pad"
+                maxLength={4}
+                containerStyle={styles.customYearInputContainer}
+              />
+              <Button
+                title="Go"
+                variant="primary"
+                onPress={() => {
+                  const parsed = parseInt(customYearInput.trim(), 10);
+                  if (!isNaN(parsed) && parsed >= 1990 && parsed <= 2100) {
+                    setSelectedYear(parsed);
+                    setPickerDecade(Math.floor(parsed / 10) * 10);
+                    setCustomYearInput('');
+                    setShowYearPickerModal(false);
+                  } else {
+                    Alert.alert('Invalid Year', 'Please enter a valid 4-digit year (e.g. 2030).');
+                  }
+                }}
+                style={styles.customYearApplyBtn}
+              />
+            </View>
+
+            {/* Quick Actions */}
+            <View style={styles.pickerBottomActions}>
+              <Button
+                title={`This Year (${currentYear})`}
+                variant="outline"
+                onPress={() => {
+                  setSelectedYear(currentYear);
+                  setPickerDecade(Math.floor(currentYear / 10) * 10);
+                  setShowYearPickerModal(false);
+                }}
+                style={styles.pickerActionBtn}
+              />
+              <Button
+                title="Close"
+                variant="secondary"
+                onPress={() => setShowYearPickerModal(false)}
+                style={styles.pickerActionBtn}
+              />
+            </View>
           </Card>
         </View>
       </Modal>
@@ -1499,6 +1791,35 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '700',
   },
+  deletePaymentRecordBtn: {
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.25)',
+  },
+  deletePaymentRecordBtnText: {
+    ...Typography.bodySmall,
+    color: Colors.light.error,
+    fontWeight: '700',
+  },
+  paymentNoteContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: Spacing.xs,
+    backgroundColor: Colors.light.surfaceDarker,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  paymentNoteText: {
+    ...Typography.bodySmall,
+    color: Colors.light.textSecondary,
+    flex: 1,
+  },
+  paymentLogDate: {
+    ...Typography.bodySmall,
+    color: Colors.light.textLight,
+  },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -1607,42 +1928,75 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 13,
   },
-  yearScrollContainer: {
-    maxHeight: 240,
-    marginVertical: Spacing.sm,
-  },
-  yearSelectorItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.light.surfaceDarker,
-    paddingHorizontal: Spacing.sm,
-  },
-  yearSelectorItemActive: {
-    backgroundColor: Colors.light.accentLight,
-    borderRadius: 10,
-  },
-  yearSelectorItemText: {
-    fontSize: 16,
-    color: Colors.light.text,
-    fontWeight: '500',
-  },
-  yearSelectorItemTextActive: {
-    color: Colors.light.accent,
-    fontWeight: '700',
-  },
   yearRowWrapper: {
     marginBottom: Spacing.md,
     paddingHorizontal: 2,
+  },
+  yearHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.xs,
   },
   yearRowLabel: {
     ...Typography.bodySmall,
     color: Colors.light.textSecondary,
     fontWeight: '700',
-    marginBottom: Spacing.xs,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  openPickerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.light.accentLight,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 4,
+  },
+  openPickerBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.light.accent,
+  },
+  yearStepperBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.light.surface,
+    borderRadius: 12,
+    padding: 6,
+    marginBottom: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+  },
+  yearStepBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
+    gap: 2,
+  },
+  yearStepBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.light.textSecondary,
+  },
+  activeYearBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.light.accent,
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 10,
+    ...Shadows.sm,
+  },
+  activeYearBadgeValue: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#FFFFFF',
     letterSpacing: 0.5,
   },
   yearRowScroll: {
@@ -1656,7 +2010,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
     borderWidth: 1,
     borderColor: Colors.light.border,
-    minWidth: 75,
+    minWidth: 70,
     alignItems: 'center',
     marginRight: 6,
   },
@@ -1671,5 +2025,100 @@ const styles = StyleSheet.create({
   },
   yearRowButtonTextActive: {
     color: '#FFFFFF',
+  },
+  moreYearsButton: {
+    flexDirection: 'row',
+    backgroundColor: Colors.light.accentLight,
+    borderColor: Colors.light.accent,
+    borderStyle: 'dashed',
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: Spacing.md,
+  },
+  decadeNavRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 6,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+  },
+  decadeNavBtn: {
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: Colors.light.surface,
+  },
+  decadeNavTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: Colors.light.text,
+  },
+  yearsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'space-between',
+    marginBottom: Spacing.md,
+  },
+  yearGridItem: {
+    width: '18%',
+    aspectRatio: 1.3,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    position: 'relative',
+  },
+  yearGridItemActive: {
+    backgroundColor: Colors.light.accent,
+    borderColor: Colors.light.accent,
+    flexDirection: 'row',
+  },
+  yearGridItemCurrent: {
+    borderColor: Colors.light.accent,
+    borderWidth: 1.5,
+  },
+  yearGridItemText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.light.text,
+  },
+  yearGridItemTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+  },
+  yearGridItemTextCurrent: {
+    color: Colors.light.accent,
+    fontWeight: '700',
+  },
+  customYearRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: Spacing.md,
+  },
+  customYearInputContainer: {
+    flex: 1,
+    marginBottom: 0,
+  },
+  customYearApplyBtn: {
+    minWidth: 65,
+    height: 48,
+  },
+  pickerBottomActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  pickerActionBtn: {
+    flex: 1,
   },
 });

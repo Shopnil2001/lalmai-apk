@@ -45,31 +45,24 @@ service cloud.firestore {
       allow get: if true;
       allow list: if isAuthenticated();
       
-      // Allow users to create their own profile during sign-up, or allow Super Admin to write
-      allow create: if isAuthenticated() && (request.auth.uid == userId || isSuperAdmin());
-      
-      // Update rules: Owner profile is protected. Other accounts are editable by Super Admins,
-      // and basic fields are editable by Admins with editUser permission or owners themselves.
-      allow update: if isAuthenticated() && (
-        (resource.data.get('isOwner', false) == true && 
-         request.auth.uid == userId && 
-         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isOwner', 'permissions', 'status'])) ||
-        (resource.data.get('isOwner', false) != true && (
-          isSuperAdmin() || 
-          (
-            hasPermission('editUser') && 
-            (
-              resource.data.area == getUserData().get('assignedArea', '') || 
-              (getUserData().get('assignedAreas', null) != null && getUserData().get('assignedAreas', []).hasAny([resource.data.area]))
-            ) &&
-            !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'status', 'assignedArea', 'assignedAreas', 'permissions'])
-          ) ||
-          (request.auth.uid == userId && 
-           !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'status', 'assignedArea', 'assignedAreas', 'permissions']))
-        ))
+      // Allow users to create their own profile during sign-up, or allow Admin / Super Admin
+      allow create: if isAuthenticated() && (
+        request.auth.uid == userId || 
+        isAdmin() || 
+        isSuperAdmin()
       );
       
-      allow delete: if isSuperAdmin() && resource.data.get('isOwner', false) != true;
+      // Update rules: Admins and Super Admins can update all accounts. Users can update their own account.
+      allow update: if isAuthenticated() && (
+        isSuperAdmin() || 
+        isAdmin() || 
+        request.auth.uid == userId
+      );
+      
+      allow delete: if isAuthenticated() && (
+        isSuperAdmin() || 
+        isAdmin()
+      );
     }
     
     // 2. Regional Areas Collection
@@ -109,7 +102,7 @@ service cloud.firestore {
         resource.data.userId == request.auth.uid || 
         hasPermission('viewAttendance')
       );
-      allow write: if hasPermission('takeAttendance');
+      allow write: if isSuperAdmin() || isAdmin() || hasPermission('takeAttendance');
     }
     
     // 8. Event Attendance Collection
@@ -119,7 +112,7 @@ service cloud.firestore {
         resource.data.userId == request.auth.uid || 
         hasPermission('viewAttendance')
       );
-      allow write: if hasPermission('takeAttendance');
+      allow write: if isSuperAdmin() || isAdmin() || hasPermission('takeAttendance');
     }
     
     // 9. Fees Collection
@@ -130,14 +123,14 @@ service cloud.firestore {
         hasPermission('viewDues') || 
         hasPermission('generateDues')
       );
-      allow create, delete: if hasPermission('generateDues');
-      allow update: if hasPermission('viewDues') || hasPermission('generateDues');
+      allow create, delete: if isSuperAdmin() || isAdmin() || hasPermission('generateDues');
+      allow update: if isSuperAdmin() || isAdmin() || hasPermission('viewDues') || hasPermission('generateDues');
     }
 
     // 10. Centralized Settings Collection
     match /settings/{settingId} {
       allow read: if settingId == 'homepage' || isAuthenticated();
-      allow write: if isSuperAdmin() || (settingId == 'fees' && hasPermission('generateDues'));
+      allow write: if isSuperAdmin() || isAdmin() || (settingId == 'fees' && hasPermission('generateDues'));
     }
 
     // 11. Member Attendance Collection (Date-based Calendar)
@@ -147,7 +140,7 @@ service cloud.firestore {
         resource.data.userId == request.auth.uid || 
         hasPermission('viewAttendance')
       );
-      allow write: if hasPermission('takeAttendance');
+      allow write: if isSuperAdmin() || isAdmin() || hasPermission('takeAttendance');
     }
     
     // 12. Payments Collection
@@ -158,7 +151,7 @@ service cloud.firestore {
         hasPermission('viewPayment') ||
         hasPermission('viewDues')
       );
-      allow write: if isSuperAdmin() || hasPermission('logPayment') || hasPermission('generateDues');
+      allow write: if isSuperAdmin() || isAdmin() || hasPermission('logPayment') || hasPermission('generateDues');
     }
 
     // 13. Other Income Collection

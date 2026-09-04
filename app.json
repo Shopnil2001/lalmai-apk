@@ -45,7 +45,8 @@
         {
           "android": {
             "enableMinifyInReleaseBuilds": false,
-            "allowBackup": false
+            "allowBackup": false,
+            "usesCleartextTraffic": true
           }
         }
       ]

@@ -57,7 +57,23 @@ export const dbService = {
     if (hasRealFirebase && db) {
       const q = query(collection(db, 'users'), orderBy('joinedAt', 'desc'));
       const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => doc.data() as UserProfile);
+      const allUsers = snapshot.docs.map(doc => doc.data() as UserProfile);
+
+      // Deduplicate: If multiple profiles exist for the same phone, prioritize phone-authenticated profile
+      const userMap = new Map<string, UserProfile>();
+      for (const u of allUsers) {
+        const cleanPhone = u.phone ? u.phone.replace(/\D/g, '').slice(-11) : null;
+        const key = cleanPhone || u.uid;
+        if (!userMap.has(key)) {
+          userMap.set(key, u);
+        } else {
+          const existing = userMap.get(key)!;
+          if (existing.authProvider !== 'phone' && u.authProvider === 'phone') {
+            userMap.set(key, u);
+          }
+        }
+      }
+      return Array.from(userMap.values());
     } else {
       return mockDB.getUsers();
     }
@@ -720,6 +736,14 @@ export const dbService = {
     }
   },
 
+  deletePayment: async (paymentId: string): Promise<void> => {
+    if (hasRealFirebase && db) {
+      await deleteDoc(doc(db, 'payments', paymentId));
+    } else {
+      await mockDB.deletePayment(paymentId);
+    }
+  },
+
   // ADMIN MEMBER REGISTRATION
   createUserByAdmin: async (profile: Omit<UserProfile, 'uid' | 'joinedAt'>, password?: string): Promise<UserProfile> => {
     const cleanPhone = profile.phone.replace(/\D/g, '').slice(-11);
@@ -738,8 +762,19 @@ export const dbService = {
         throw new Error('Secondary auth client is not initialized');
       }
       
-      const cred = await createUserWithEmailAndPassword(secAuth, derivedEmail, derivedPwd);
-      const uid = cred.user.uid;
+      let uid: string;
+      try {
+        const cred = await createUserWithEmailAndPassword(secAuth, derivedEmail, derivedPwd);
+        uid = cred.user.uid;
+      } catch (authErr: any) {
+        if (authErr.code === 'auth/email-already-in-use') {
+          const { signInWithEmailAndPassword } = await import('firebase/auth');
+          const cred = await signInWithEmailAndPassword(secAuth, derivedEmail, derivedPwd);
+          uid = cred.user.uid;
+        } else {
+          throw authErr;
+        }
+      }
       
       await signOut(secAuth);
       
@@ -1145,24 +1180,44 @@ export const dbService = {
   runMigrationCheck: async (): Promise<void> => {
     if (!hasRealFirebase || !db) return;
     try {
-      const { collection, getDocs } = require('firebase/firestore');
+      const { collection, getDocs, doc, getDoc, deleteDoc } = require('firebase/firestore');
       const snapshot = await getDocs(collection(db, 'users'));
       const oldUsers = snapshot.docs
         .map((doc: any) => doc.data() as UserProfile)
         .filter((u: UserProfile) => u.authProvider !== 'phone' && u.phone);
 
       if (oldUsers.length === 0) return;
-      console.log(`[Migration] Found ${oldUsers.length} users to migrate to Phone OTP Auth`);
+      console.log(`[Migration] Found ${oldUsers.length} potential users to check for Phone OTP Auth`);
 
       for (const oldUser of oldUsers) {
         try {
+          const cleanPhone = oldUser.phone.replace(/\D/g, '').slice(-11);
+          if (!cleanPhone) continue;
+
+          // Check if this phone number is already mapped to an active phone-authenticated user
+          const mapDoc = await getDoc(doc(db, 'phone_mappings', cleanPhone));
+          if (mapDoc.exists() && mapDoc.data()?.uid && mapDoc.data().uid !== oldUser.uid) {
+            const mappedUid = mapDoc.data().uid;
+            const mappedUserDoc = await getDoc(doc(db, 'users', mappedUid));
+            if (mappedUserDoc.exists()) {
+              console.log(`[Migration] User ${oldUser.name} (${cleanPhone}) is already migrated to UID ${mappedUid}.`);
+              try {
+                await deleteDoc(doc(db, 'users', oldUser.uid));
+                console.log(`[Migration] Cleaned up obsolete document ${oldUser.uid}`);
+              } catch {
+                // If security rules protect owner doc, safely ignore
+              }
+              continue;
+            }
+          }
+
           await dbService.migrateUserToPhoneAuth(oldUser);
         } catch (err) {
-          console.error(`[Migration] Failed to migrate user ${oldUser.name} (${oldUser.uid}):`, err);
+          console.warn(`[Migration] Failed to migrate user ${oldUser.name} (${oldUser.uid}):`, err);
         }
       }
     } catch (err) {
-      console.error('[Migration] runMigrationCheck failed:', err);
+      console.warn('[Migration] runMigrationCheck failed:', err);
     }
   },
 
@@ -1271,8 +1326,13 @@ export const dbService = {
     // 7. Write phone mapping
     await setDoc(doc(db, 'phone_mappings', cleanPhone), { email: derivedEmail, uid: newUid });
 
-    // 8. Delete old user document
-    await deleteDoc(doc(db, 'users', oldUid));
+    // 8. Delete old user document if permitted
+    try {
+      await deleteDoc(doc(db, 'users', oldUid));
+      console.log(`[Migration] Cleaned up old document ${oldUid}`);
+    } catch (delErr) {
+      console.warn(`[Migration] Old document ${oldUid} retained safely:`, delErr);
+    }
 
     console.log(`[Migration] Successfully migrated user ${oldUser.name} from UID ${oldUid} to ${newUid}`);
   },

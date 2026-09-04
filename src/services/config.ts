@@ -20,5 +20,13 @@ export const CONFIG = {
   cloudinary: {
     cloudName: process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME || "your-cloud-name",
     uploadPreset: process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "your-unsigned-upload-preset",
+  },
+
+  // Bulk SMS BD Gateway Configuration
+  bulkSMS: {
+    baseUrl: process.env.EXPO_PUBLIC_BULKSMSBD_BASE_URL || "https://bulksmsbd.net/api",
+    apiKey: process.env.EXPO_PUBLIC_BULKSMSBD_API_KEY || "MRdRS0vWffYPHV3uEkph",
+    senderId: process.env.EXPO_PUBLIC_BULKSMSBD_SENDER_ID || "8809648910550",
   }
 };
+
