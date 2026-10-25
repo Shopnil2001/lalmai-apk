@@ -15,6 +15,7 @@ export default function AdminLayout() {
       <Stack.Screen name="dashboard" />
       <Stack.Screen name="members/index" />
       <Stack.Screen name="members/[id]" />
+      <Stack.Screen name="members/create" />
       <Stack.Screen name="meetings/create" />
       <Stack.Screen name="meetings/[id]/attendance" />
       <Stack.Screen name="meetings/[id]/edit" />

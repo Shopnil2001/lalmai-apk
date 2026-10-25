@@ -225,6 +225,13 @@ export default function AdminDashboard() {
       desc: 'Verify applications & assign roles'
     },
     {
+      title: 'Add New Member',
+      icon: 'person-add',
+      color: '#2563EB',
+      route: '/(admin)/members/create',
+      desc: 'Register a driver or fleet member'
+    },
+    {
       title: 'Schedule Meeting',
       icon: 'calendar',
       color: '#059669',

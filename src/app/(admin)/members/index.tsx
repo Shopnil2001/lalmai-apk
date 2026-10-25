@@ -240,8 +240,8 @@ export default function MembersDirectory() {
         title="Member Directory" 
         showBack 
         fallbackRoute="/(admin)/dashboard"
-        rightIcon={user?.role === 'Super Admin' ? 'add-outline' : undefined}
-        onRightPress={user?.role === 'Super Admin' ? () => router.push('/(admin)/members/create') : undefined}
+        rightIcon={user?.role === 'Super Admin' || user?.role === 'Admin' ? 'add-outline' : undefined}
+        onRightPress={user?.role === 'Super Admin' || user?.role === 'Admin' ? () => router.push('/(admin)/members/create') : undefined}
       />
 
       {/* Search Input */}

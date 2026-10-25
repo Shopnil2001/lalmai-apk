@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -90,19 +91,20 @@ export default function CreateMember() {
     setError(null);
     setLoading(true);
     try {
+      const targetRole = user?.role === 'Super Admin' ? role : 'General Member';
       const createdUser = await dbService.createUserByAdmin({
-        name,
-        email: email || undefined,
-        phone,
-        drivingLicense: license || undefined,
-        registrationNumber: vehicle || undefined,
+        name: name.trim(),
+        email: email.trim() ? email.trim() : undefined,
+        phone: phone.trim(),
+        drivingLicense: license.trim() ? license.trim() : undefined,
+        registrationNumber: vehicle.trim() ? vehicle.trim() : undefined,
         area: selectedArea || undefined,
-        role,
+        role: targetRole,
         status,
         yearlyFee: feeNum,
         photoUrl: null,
         carType,
-        address: address || undefined,
+        address: address.trim() ? address.trim() : undefined,
       });
 
       if (paidNum > 0 && createdUser && createdUser.uid) {
@@ -116,7 +118,11 @@ export default function CreateMember() {
         );
       }
 
-      router.back();
+      Alert.alert(
+        'Success',
+        `Member ${name.trim()} has been successfully created.`,
+        [{ text: 'OK', onPress: () => router.back() }]
+      );
     } catch (err: any) {
       setError(getFirebaseErrorMessage(err));
     } finally {
@@ -276,46 +282,57 @@ export default function CreateMember() {
             />
 
             {/* Role Dropdown */}
-            <View style={styles.dropdownContainer}>
-              <Text style={styles.dropdownLabel}>Role *</Text>
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => {
-                  setShowRoleDropdown(!showRoleDropdown);
-                  setShowAreaDropdown(false);
-                  setShowStatusDropdown(false);
-                }}
-                style={styles.dropdownValueBox}
-              >
-                <Text style={styles.dropdownValueText}>{role}</Text>
-                <Ionicons name={showRoleDropdown ? "chevron-up" : "chevron-down"} size={20} color={Colors.light.textSecondary} />
-              </TouchableOpacity>
+            {user?.role === 'Super Admin' ? (
+              <View style={styles.dropdownContainer}>
+                <Text style={styles.dropdownLabel}>Role *</Text>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    setShowRoleDropdown(!showRoleDropdown);
+                    setShowAreaDropdown(false);
+                    setShowStatusDropdown(false);
+                    setShowCarDropdown(false);
+                  }}
+                  style={styles.dropdownValueBox}
+                >
+                  <Text style={styles.dropdownValueText}>{role}</Text>
+                  <Ionicons name={showRoleDropdown ? "chevron-up" : "chevron-down"} size={20} color={Colors.light.textSecondary} />
+                </TouchableOpacity>
 
-              {showRoleDropdown && (
-                <View style={styles.dropdownList}>
-                  {([ 'General Member', 'Admin', 'Super Admin' ] as const).map((r, idx) => (
-                    <TouchableOpacity
-                      key={idx}
-                      activeOpacity={0.7}
-                      onPress={() => {
-                        setRole(r);
-                        setShowRoleDropdown(false);
-                      }}
-                      style={[
-                        styles.dropdownItem,
-                        role === r && styles.dropdownItemActive
-                      ]}
-                    >
-                      <Text style={[
-                        styles.dropdownItemText,
-                        role === r && styles.dropdownItemTextActive
-                      ]}>{r}</Text>
-                      {role === r && <Ionicons name="checkmark" size={18} color={Colors.light.accent} />}
-                    </TouchableOpacity>
-                  ))}
+                {showRoleDropdown && (
+                  <View style={styles.dropdownList}>
+                    {([ 'General Member', 'Admin', 'Super Admin' ] as const).map((r, idx) => (
+                      <TouchableOpacity
+                        key={idx}
+                        activeOpacity={0.7}
+                        onPress={() => {
+                          setRole(r);
+                          setShowRoleDropdown(false);
+                        }}
+                        style={[
+                          styles.dropdownItem,
+                          role === r && styles.dropdownItemActive
+                        ]}
+                      >
+                        <Text style={[
+                          styles.dropdownItemText,
+                          role === r && styles.dropdownItemTextActive
+                        ]}>{r}</Text>
+                        {role === r && <Ionicons name="checkmark" size={18} color={Colors.light.accent} />}
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
+            ) : (
+              <View style={styles.dropdownContainer}>
+                <Text style={styles.dropdownLabel}>Role</Text>
+                <View style={[styles.dropdownValueBox, { backgroundColor: '#F1F5F9' }]}>
+                  <Text style={[styles.dropdownValueText, { color: Colors.light.textSecondary }]}>General Member</Text>
+                  <Ionicons name="lock-closed-outline" size={16} color={Colors.light.textSecondary} />
                 </View>
-              )}
-            </View>
+              </View>
+            )}
 
             {/* Status Dropdown */}
             <View style={styles.dropdownContainer}>
