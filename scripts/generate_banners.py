@@ -15,12 +15,12 @@ def get_base64_image(file_path):
     return None
 
 def generate_svg_qr(data_url, box_size=10):
-    import re
     factory = qrcode.image.svg.SvgPathImage
     img = qrcode.make(data_url, image_factory=factory, box_size=box_size, border=1)
     svg_str = img.to_string(encoding="unicode")
     if "<?xml" in svg_str:
         svg_str = svg_str[svg_str.find("<svg"):]
+    import re
     svg_str = re.sub(r'width="[^"]+"', 'width="100%"', svg_str, count=1)
     svg_str = re.sub(r'height="[^"]+"', 'height="100%"', svg_str, count=1)
     return svg_str
@@ -30,7 +30,7 @@ def build_horizontal_banner(icon_b64, qr_svg):
 <html lang="bn">
 <head>
   <meta charset="UTF-8">
-  <title>Lalmai Rent Car - Horizontal Signboard Banner</title>
+  <title>Lalmai Upozila Rent A Car - Official Banner</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap');
 
@@ -50,334 +50,256 @@ def build_horizontal_banner(icon_b64, qr_svg):
       height: 600mm;
       overflow: hidden;
       font-family: 'Plus Jakarta Sans', 'Hind Siliguri', 'Nirmala UI', sans-serif;
-      background: linear-gradient(135deg, #0A1E5C 0%, #153E90 35%, #1D4ED8 70%, #1E40AF 100%);
-      color: #FFFFFF;
-      position: relative;
+      background: #EFF6FF;
+      color: #0F172A;
       display: flex;
       flex-direction: row;
       align-items: stretch;
-      padding: 30mm 40mm;
-      gap: 30mm;
+      padding: 0;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }}
 
-    /* Decorative background shapes */
-    .bg-circle-1 {{
-      position: absolute;
-      top: -120mm;
-      left: -100mm;
-      width: 450mm;
-      height: 450mm;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, rgba(29, 78, 216, 0) 70%);
-      pointer-events: none;
-    }}
-
-    .bg-circle-2 {{
-      position: absolute;
-      bottom: -150mm;
-      right: 100mm;
-      width: 500mm;
-      height: 500mm;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(234, 179, 8, 0.15) 0%, rgba(29, 78, 216, 0) 70%);
-      pointer-events: none;
-    }}
-
-    /* Left Branding Column */
-    .left-col {{
-      flex: 1.35;
+    /* Left: Deep vivid royal blue brand side */
+    .brand-side {{
+      flex: 1.15;
+      background: linear-gradient(145deg, #1D4ED8 0%, #2563EB 55%, #3B82F6 100%);
+      color: #FFFFFF;
+      padding: 45mm 42mm;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      z-index: 10;
+      position: relative;
+      box-shadow: 10mm 0 30mm rgba(15, 23, 42, 0.15);
+      z-index: 5;
     }}
 
-    .brand-header {{
+    .logo-container {{
       display: flex;
       align-items: center;
-      gap: 16mm;
+      gap: 12mm;
+      margin-bottom: 10mm;
     }}
 
-    .app-logo {{
-      width: 48mm;
-      height: 48mm;
+    .app-icon {{
+      width: 44mm;
+      height: 44mm;
       border-radius: 12mm;
-      border: 3mm solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 10mm 25mm rgba(0, 0, 0, 0.4);
+      border: 2.5mm solid rgba(255, 255, 255, 0.95);
+      box-shadow: 0 6mm 18mm rgba(0, 0, 0, 0.25);
       background: #FFFFFF;
       object-fit: cover;
     }}
 
-    .tagline-pill {{
+    .pill-badge {{
       display: inline-block;
-      background: rgba(255, 255, 255, 0.15);
-      border: 1mm solid rgba(255, 255, 255, 0.3);
-      padding: 2.5mm 10mm;
+      background: rgba(255, 255, 255, 0.18);
+      border: 0.8mm solid rgba(255, 255, 255, 0.4);
+      padding: 2.5mm 9mm;
       border-radius: 999mm;
-      font-size: 8.5mm;
-      font-weight: 700;
-      color: #FDE047;
-      text-transform: uppercase;
-      letter-spacing: 1.5mm;
-      margin-bottom: 3mm;
-    }}
-
-    .main-title-bn {{
-      font-size: 26mm;
-      font-weight: 800;
-      line-height: 1.15;
-      color: #FFFFFF;
-      text-shadow: 0 4mm 10mm rgba(0, 0, 0, 0.4);
-      margin-top: 2mm;
-    }}
-
-    .main-title-en {{
-      font-size: 16mm;
-      font-weight: 900;
-      letter-spacing: 1.5mm;
-      color: #93C5FD;
-      text-transform: uppercase;
-      margin-top: 1mm;
-      text-shadow: 0 2mm 6mm rgba(0, 0, 0, 0.3);
-    }}
-
-    .subtitle-row {{
-      font-size: 11mm;
-      font-weight: 600;
-      color: #E2E8F0;
-      margin-top: 4mm;
-    }}
-
-    /* Features Grid */
-    .features-row {{
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8mm;
-      margin: 10mm 0;
-    }}
-
-    .feat-card {{
-      background: rgba(255, 255, 255, 0.1);
-      border: 1mm solid rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(10px);
-      border-radius: 8mm;
-      padding: 6mm 7mm;
-      display: flex;
-      flex-direction: column;
-      gap: 2mm;
-    }}
-
-    .feat-icon {{
-      font-size: 11mm;
-    }}
-
-    .feat-title-bn {{
       font-size: 7.5mm;
       font-weight: 700;
       color: #FFFFFF;
-      line-height: 1.25;
-    }}
-
-    .feat-title-en {{
-      font-size: 5mm;
-      font-weight: 600;
-      color: #93C5FD;
-      text-transform: uppercase;
-      letter-spacing: 0.5mm;
-    }}
-
-    /* Contact & Helpline Bar */
-    .contact-bar {{
-      background: rgba(15, 23, 42, 0.55);
-      border: 1mm solid rgba(255, 255, 255, 0.25);
-      border-radius: 9mm;
-      padding: 5mm 12mm;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }}
-
-    .contact-item {{
-      display: flex;
-      align-items: center;
-      gap: 4mm;
-    }}
-
-    .contact-label {{
-      font-size: 6.5mm;
-      font-weight: 600;
-      color: #CBD5E1;
-    }}
-
-    .contact-val {{
-      font-size: 9mm;
-      font-weight: 800;
-      color: #FDE047;
-      font-family: 'Plus Jakarta Sans', monospace;
-    }}
-
-    /* Right QR Column */
-    .right-col {{
-      flex: 0.85;
-      background: #FFFFFF;
-      color: #0F172A;
-      border-radius: 20mm;
-      box-shadow: 0 20mm 50mm rgba(0, 0, 0, 0.4);
-      padding: 16mm 16mm;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      text-align: center;
-      z-index: 10;
-      border: 3mm solid #BFDBFE;
-    }}
-
-    .qr-badge-top {{
-      background: #EFF6FF;
-      border: 0.8mm solid #BFDBFE;
-      color: #1D4ED8;
-      font-size: 7mm;
-      font-weight: 800;
-      padding: 3mm 10mm;
-      border-radius: 999mm;
       text-transform: uppercase;
       letter-spacing: 0.8mm;
     }}
 
-    .qr-container {{
-      background: #FFFFFF;
-      padding: 6mm;
-      border: 2mm solid #E2E8F0;
-      border-radius: 12mm;
-      box-shadow: 0 6mm 20mm rgba(0, 0, 0, 0.06);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 4mm 0;
-    }}
-
-    .qr-container svg {{
-      width: 170mm;
-      height: 170mm;
-      display: block;
-    }}
-
-    .qr-heading-bn {{
-      font-size: 10.5mm;
+    .title-bn {{
+      font-size: 26mm;
       font-weight: 800;
-      color: #0F172A;
-      line-height: 1.25;
+      line-height: 1.15;
+      color: #FFFFFF;
+      margin-top: 6mm;
+      text-shadow: 0 3mm 8mm rgba(0, 0, 0, 0.2);
     }}
 
-    .qr-heading-en {{
-      font-size: 6.5mm;
-      font-weight: 700;
-      color: #1D4ED8;
+    .title-en {{
+      font-size: 16mm;
+      font-weight: 800;
+      letter-spacing: 1.2mm;
+      color: #DBEAFE;
       text-transform: uppercase;
-      letter-spacing: 0.5mm;
-      margin-top: 1mm;
-    }}
-
-    .qr-subtext {{
-      font-size: 6mm;
-      font-weight: 600;
-      color: #64748B;
-      margin-top: 1mm;
-    }}
-
-    .download-url-pill {{
-      width: 100%;
-      background: #F1F5F9;
-      border: 0.8mm solid #CBD5E1;
-      border-radius: 6mm;
-      padding: 3mm 4mm;
-      font-size: 4.5mm;
-      font-weight: 700;
-      color: #1E40AF;
-      word-break: break-all;
-      font-family: 'Plus Jakarta Sans', monospace;
       margin-top: 2mm;
     }}
 
-    .trust-badges {{
-      font-size: 5.5mm;
+    .app-subtitle-bn {{
+      font-size: 11mm;
+      font-weight: 600;
+      color: #EFF6FF;
+      margin-top: 7mm;
+      line-height: 1.3;
+    }}
+
+    .app-subtitle-en {{
+      font-size: 8mm;
+      font-weight: 500;
+      color: #BFDBFE;
+      margin-top: 1.5mm;
+      text-transform: uppercase;
+      letter-spacing: 0.6mm;
+    }}
+
+    .brand-bottom {{
+      border-top: 1mm solid rgba(255, 255, 255, 0.25);
+      padding-top: 8mm;
+      display: flex;
+      flex-direction: column;
+      gap: 3mm;
+    }}
+
+    .trust-tag-bn {{
+      font-size: 8mm;
       font-weight: 700;
-      color: #059669;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 3mm;
+    }}
+
+    .trust-tag-en {{
+      font-size: 6.5mm;
+      font-weight: 600;
+      color: #BFDBFE;
+      letter-spacing: 0.4mm;
+    }}
+
+    /* Right: Crisp white QR download card */
+    .qr-side {{
+      flex: 1.05;
+      background: #F1F5F9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30mm 40mm;
+      z-index: 1;
+    }}
+
+    .qr-card-container {{
+      width: 100%;
+      background: #FFFFFF;
+      border: 2mm solid #E2E8F0;
+      border-radius: 20mm;
+      box-shadow: 0 16mm 40mm rgba(15, 23, 42, 0.08);
+      padding: 16mm 20mm 16mm;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }}
+
+    .qr-frame {{
+      background: #FFFFFF;
+      padding: 6mm;
+      border: 2mm solid #CBD5E1;
+      border-radius: 12mm;
+      box-shadow: 0 4mm 16mm rgba(0, 0, 0, 0.05);
+      margin-bottom: 7mm;
+      display: inline-block;
+    }}
+
+    .qr-frame svg {{
+      width: 175mm;
+      height: 175mm;
+      display: block;
+    }}
+
+    .scan-title-en {{
+      font-size: 9mm;
+      font-weight: 800;
+      color: #0F172A;
+      letter-spacing: -0.2mm;
+    }}
+
+    .scan-title-bn {{
+      font-size: 9.5mm;
+      font-weight: 700;
+      color: #1D4ED8;
       margin-top: 1mm;
+      line-height: 1.3;
+    }}
+
+    .scan-desc-en {{
+      font-size: 5.5mm;
+      font-weight: 500;
+      color: #64748B;
+      margin-top: 3mm;
+    }}
+
+    .scan-desc-bn {{
+      font-size: 6.5mm;
+      font-weight: 600;
+      color: #475569;
+      margin-top: 1mm;
+    }}
+
+    .link-pill {{
+      width: 100%;
+      background: #EFF6FF;
+      border: 1mm solid #BFDBFE;
+      border-radius: 6mm;
+      padding: 3.5mm 5mm;
+      margin-top: 6mm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }}
+
+    .link-text {{
+      font-size: 4.8mm;
+      font-weight: 700;
+      color: #1D4ED8;
+      font-family: 'Plus Jakarta Sans', monospace;
+      word-break: break-all;
+    }}
+
+    .footer-note {{
+      font-size: 5mm;
+      font-weight: 600;
+      color: #64748B;
+      margin-top: 4mm;
     }}
   </style>
 </head>
 <body>
-  <div class="bg-circle-1"></div>
-  <div class="bg-circle-2"></div>
 
-  <!-- Left Branding & Information -->
-  <div class="left-col">
-    <div>
-      <div class="brand-header">
-        {"<img src='" + icon_b64 + "' class='app-logo' alt='App Logo' />" if icon_b64 else ""}
-        <div>
-          <div class="tagline-pill">রেন্ট এ কার মালিক ও চালক সমিতি</div>
-          <div class="main-title-bn">লালমাই উপজেলা রেন্ট এ কার</div>
-          <div class="main-title-en">LALMAI UPOZILA RENT A CAR</div>
-          <div class="subtitle-row">অফিসিয়াল অ্যান্ড্রয়েড মোবাইল অ্যাপ্লিকেশন • Official Android Application</div>
-        </div>
+  <!-- Left: Brand Identity -->
+  <div class="brand-side">
+    <div class="brand-top">
+      <div class="logo-container">
+        {"<img src='" + icon_b64 + "' class='app-icon' alt='App Icon' />" if icon_b64 else ""}
+        <div class="pill-badge">OFFICIAL ANDROID APPLICATION</div>
       </div>
-
-      <!-- Key Service Features -->
-      <div class="features-row">
-        <div class="feat-card">
-          <div class="feat-icon">⚡</div>
-          <div class="feat-title-bn">সহজ ও দ্রুত গাড়ি বুকিং</div>
-          <div class="feat-title-en">Fast Car Booking</div>
-        </div>
-        <div class="feat-card">
-          <div class="feat-icon">👥</div>
-          <div class="feat-title-bn">মালিক ও চালক ডিরেক্টরি</div>
-          <div class="feat-title-en">Member Directory</div>
-        </div>
-        <div class="feat-card">
-          <div class="feat-icon">💳</div>
-          <div class="feat-title-bn">ডিজিটাল ফি ও রিপোর্ট</div>
-          <div class="feat-title-en">Dues & Reports</div>
-        </div>
-      </div>
+      <div class="title-bn">লালমাই উপজেলা রেন্ট এ কার</div>
+      <div class="title-en">Lalmai Upozila Rent A Car</div>
+      <div class="app-subtitle-bn">অফিসিয়াল অ্যান্ড্রয়েড মোবাইল অ্যাপ্লিকেশন</div>
+      <div class="app-subtitle-en">Official Mobile Application for Drivers & Members</div>
     </div>
 
-    <!-- Contact & Helpline Bar -->
-    <div class="contact-bar">
-      <div class="contact-item">
-        <span class="contact-label">হটলাইন / কল:</span>
-        <span class="contact-val">+880 1711-223344</span>
-      </div>
-      <div class="contact-item">
-        <span class="contact-label">হোয়াটসঅ্যাপ:</span>
-        <span class="contact-val">+880 1711-223344</span>
-      </div>
-      <div class="contact-item">
-        <span class="contact-label">লোকেশন:</span>
-        <span class="contact-val" style="color: #FFFFFF; font-family: inherit; font-size: 7.5mm;">বাগমারা, লালমাই, কুমিল্লা</span>
-      </div>
+    <div class="brand-bottom">
+      <div class="trust-tag-bn">✓ স্থায়ী লিংক • স্বয়ংক্রিয় আপডেট • ১০০% নিরাপদ ও ভেরিফাইড</div>
+      <div class="trust-tag-en">Permanent Link • Auto Updates • 100% Safe & Verified</div>
     </div>
   </div>
 
-  <!-- Right QR Code Scan Box -->
-  <div class="right-col">
-    <div class="qr-badge-top">অ্যাপ ডাউনলোড করুন • DOWNLOAD APP</div>
-    
-    <div class="qr-container">
-      {qr_svg}
-    </div>
+  <!-- Right: QR Code Scanner Card -->
+  <div class="qr-side">
+    <div class="qr-card-container">
+      <div class="qr-frame">
+        {qr_svg}
+      </div>
 
-    <div>
-      <div class="qr-heading-bn">মোবাইল দিয়ে স্ক্যান করুন</div>
-      <div class="qr-heading-en">SCAN TO DOWNLOAD APK</div>
-      <div class="qr-subtext">ক্যামেরা বা কিউআর স্ক্যানার দিয়ে সরাসরি অ্যাপটি ইনস্টল করুন</div>
-      <div class="download-url-pill">{URL}</div>
-      <div class="trust-badges">✓ স্থায়ী লিংক • ✓ অটো আপডেট • ✓ ১০০% নিরাপদ</div>
+      <div class="scan-title-en">Scan to Download APK Directly</div>
+      <div class="scan-title-bn">সরাসরি অ্যাপ ডাউনলোড করতে স্ক্যান করুন</div>
+      
+      <div class="scan-desc-en">Point your phone camera or QR scanner at the code</div>
+      <div class="scan-desc-bn">আপনার ফোনের ক্যামেরা অথবা কিউআর স্ক্যানার দিয়ে স্ক্যান করুন</div>
+
+      <div class="link-pill">
+        <span class="link-text">{URL}</span>
+      </div>
+
+      <div class="footer-note">Scan with any Android phone camera or Google Lens to install</div>
     </div>
   </div>
 
@@ -385,17 +307,17 @@ def build_horizontal_banner(icon_b64, qr_svg):
 </html>
 """
 
-def build_rollup_banner(icon_b64, qr_svg):
+def build_vertical_banner(icon_b64, qr_svg):
     return f"""<!DOCTYPE html>
 <html lang="bn">
 <head>
   <meta charset="UTF-8">
-  <title>Lalmai Rent Car - Roll-up Standee Festoon Banner</title>
+  <title>Lalmai Upozila Rent A Car - Vertical Standee Banner</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap');
 
     @page {{
-      size: 800mm 1800mm;
+      size: 800mm 1600mm;
       margin: 0;
     }}
 
@@ -407,238 +329,230 @@ def build_rollup_banner(icon_b64, qr_svg):
 
     body {{
       width: 800mm;
-      height: 1800mm;
+      height: 1600mm;
       overflow: hidden;
       font-family: 'Plus Jakarta Sans', 'Hind Siliguri', 'Nirmala UI', sans-serif;
-      background: linear-gradient(180deg, #0A1E5C 0%, #153E90 25%, #1D4ED8 65%, #0F2D80 100%);
-      color: #FFFFFF;
-      position: relative;
+      background: #F1F5F9;
+      color: #0F172A;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      padding: 50mm 40mm;
-      text-align: center;
+      padding: 0;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }}
 
-    /* Top Logo & Title */
-    .top-section {{
+    /* Top Blue Banner */
+    .top-banner {{
+      width: 100%;
+      background: linear-gradient(155deg, #1D4ED8 0%, #2563EB 55%, #3B82F6 100%);
+      color: #FFFFFF;
+      padding: 38mm 40mm 30mm;
+      text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
+      box-shadow: 0 15mm 40mm rgba(15, 23, 42, 0.15);
+      border-radius: 0 0 32mm 32mm;
     }}
 
-    .app-logo {{
-      width: 70mm;
-      height: 70mm;
-      border-radius: 18mm;
-      border: 4mm solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 12mm 30mm rgba(0, 0, 0, 0.4);
+    .app-icon {{
+      width: 50mm;
+      height: 50mm;
+      border-radius: 14mm;
+      border: 3mm solid rgba(255, 255, 255, 0.95);
+      box-shadow: 0 8mm 25mm rgba(0, 0, 0, 0.3);
       background: #FFFFFF;
-      margin-bottom: 12mm;
+      margin-bottom: 8mm;
+      object-fit: cover;
     }}
 
-    .tag-pill {{
-      background: rgba(255, 255, 255, 0.15);
-      border: 1.5mm solid rgba(255, 255, 255, 0.3);
-      padding: 4mm 16mm;
+    .pill-badge {{
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.18);
+      border: 1mm solid rgba(255, 255, 255, 0.4);
+      padding: 3mm 12mm;
       border-radius: 999mm;
-      font-size: 11mm;
+      font-size: 9.5mm;
       font-weight: 700;
-      color: #FDE047;
+      color: #FFFFFF;
       text-transform: uppercase;
-      letter-spacing: 2mm;
+      letter-spacing: 1mm;
       margin-bottom: 6mm;
     }}
 
     .title-bn {{
-      font-size: 34mm;
+      font-size: 32mm;
       font-weight: 800;
       line-height: 1.15;
       color: #FFFFFF;
-      text-shadow: 0 6mm 15mm rgba(0, 0, 0, 0.5);
+      text-shadow: 0 4mm 10mm rgba(0, 0, 0, 0.25);
     }}
 
     .title-en {{
       font-size: 20mm;
-      font-weight: 900;
-      letter-spacing: 2mm;
-      color: #93C5FD;
+      font-weight: 800;
+      letter-spacing: 1.5mm;
+      color: #DBEAFE;
       text-transform: uppercase;
       margin-top: 3mm;
     }}
 
-    .subtitle-text {{
-      font-size: 14mm;
+    .sub-title-bn {{
+      font-size: 13.5mm;
       font-weight: 600;
-      color: #E2E8F0;
+      color: #EFF6FF;
       margin-top: 6mm;
     }}
 
-    /* Center QR Card */
-    .qr-card {{
-      width: 100%;
+    .sub-title-en {{
+      font-size: 10mm;
+      font-weight: 500;
+      color: #BFDBFE;
+      margin-top: 2mm;
+      text-transform: uppercase;
+      letter-spacing: 0.8mm;
+    }}
+
+    /* Center White Card */
+    .center-card {{
+      width: 86%;
       background: #FFFFFF;
-      color: #0F172A;
+      border: 3mm solid #E2E8F0;
       border-radius: 28mm;
-      padding: 24mm 20mm;
-      box-shadow: 0 25mm 60mm rgba(0, 0, 0, 0.45);
-      border: 4mm solid #BFDBFE;
+      box-shadow: 0 20mm 50mm rgba(15, 23, 42, 0.08);
+      padding: 22mm 24mm 20mm;
       display: flex;
       flex-direction: column;
       align-items: center;
+      text-align: center;
+      margin: 10mm 0;
     }}
 
-    .qr-badge {{
-      background: #EFF6FF;
-      border: 1.2mm solid #BFDBFE;
-      color: #1D4ED8;
-      font-size: 11mm;
-      font-weight: 800;
-      padding: 4mm 14mm;
-      border-radius: 999mm;
-      text-transform: uppercase;
-      margin-bottom: 12mm;
-    }}
-
-    .qr-box {{
+    .qr-frame {{
       background: #FFFFFF;
       padding: 8mm;
-      border: 3mm solid #E2E8F0;
+      border: 3mm solid #CBD5E1;
       border-radius: 16mm;
-      box-shadow: 0 8mm 25mm rgba(0, 0, 0, 0.08);
-      margin-bottom: 12mm;
+      box-shadow: 0 6mm 20mm rgba(0, 0, 0, 0.06);
+      margin-bottom: 10mm;
+      display: inline-block;
     }}
 
-    .qr-box svg {{
-      width: 250mm;
-      height: 250mm;
+    .qr-frame svg {{
+      width: 230mm;
+      height: 230mm;
       display: block;
     }}
 
-    .scan-title-bn {{
-      font-size: 18mm;
+    .scan-title-en {{
+      font-size: 13.5mm;
       font-weight: 800;
       color: #0F172A;
-      line-height: 1.25;
+      letter-spacing: -0.3mm;
     }}
 
-    .scan-title-en {{
-      font-size: 11mm;
+    .scan-title-bn {{
+      font-size: 14.5mm;
       font-weight: 700;
       color: #1D4ED8;
-      text-transform: uppercase;
-      letter-spacing: 1mm;
       margin-top: 2mm;
+      line-height: 1.3;
     }}
 
-    .scan-desc {{
-      font-size: 10mm;
-      font-weight: 600;
+    .scan-desc-en {{
+      font-size: 8mm;
+      font-weight: 500;
       color: #64748B;
       margin-top: 4mm;
     }}
 
-    .url-box {{
+    .scan-desc-bn {{
+      font-size: 9mm;
+      font-weight: 600;
+      color: #475569;
+      margin-top: 1.5mm;
+    }}
+
+    .link-pill {{
       width: 100%;
-      background: #F1F5F9;
-      border: 1.2mm solid #CBD5E1;
+      background: #EFF6FF;
+      border: 1.2mm solid #BFDBFE;
       border-radius: 8mm;
-      padding: 5mm 6mm;
-      font-size: 6.5mm;
-      font-weight: 700;
-      color: #1E40AF;
-      word-break: break-all;
-      font-family: 'Plus Jakarta Sans', monospace;
+      padding: 4.5mm 6mm;
       margin-top: 8mm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }}
 
-    .trust-tag {{
-      font-size: 8.5mm;
+    .link-text {{
+      font-size: 6.8mm;
       font-weight: 700;
-      color: #059669;
-      margin-top: 6mm;
+      color: #1D4ED8;
+      font-family: 'Plus Jakarta Sans', monospace;
+      word-break: break-all;
     }}
 
-    /* Bottom Contact Bar */
-    .bottom-section {{
+    /* Bottom Trust Bar */
+    .bottom-bar {{
       width: 100%;
-      background: rgba(15, 23, 42, 0.6);
-      border: 1.5mm solid rgba(255, 255, 255, 0.25);
-      border-radius: 14mm;
-      padding: 10mm 16mm;
+      padding: 12mm 30mm 16mm;
+      text-align: center;
       display: flex;
       flex-direction: column;
-      gap: 4mm;
-    }}
-
-    .hotline-row {{
-      display: flex;
-      justify-content: space-between;
       align-items: center;
+      gap: 3mm;
     }}
 
-    .hl-label {{
-      font-size: 10mm;
-      font-weight: 600;
-      color: #CBD5E1;
-    }}
-
-    .hl-val {{
-      font-size: 13mm;
-      font-weight: 800;
-      color: #FDE047;
-      font-family: 'Plus Jakarta Sans', monospace;
-    }}
-
-    .loc-text {{
+    .trust-bn {{
       font-size: 9.5mm;
+      font-weight: 700;
+      color: #1E293B;
+    }}
+
+    .trust-en {{
+      font-size: 8mm;
       font-weight: 600;
-      color: #FFFFFF;
-      border-top: 1mm solid rgba(255, 255, 255, 0.15);
-      padding-top: 4mm;
+      color: #64748B;
+      letter-spacing: 0.5mm;
     }}
   </style>
 </head>
 <body>
 
-  <!-- Top Branding -->
-  <div class="top-section">
-    {"<img src='" + icon_b64 + "' class='app-logo' alt='App Logo' />" if icon_b64 else ""}
-    <div class="tag-pill">রেন্ট এ কার মালিক ও চালক সমিতি</div>
+  <!-- Top Banner -->
+  <div class="top-banner">
+    {"<img src='" + icon_b64 + "' class='app-icon' alt='App Icon' />" if icon_b64 else ""}
+    <div class="pill-badge">OFFICIAL ANDROID APPLICATION</div>
     <div class="title-bn">লালমাই উপজেলা রেন্ট এ কার</div>
-    <div class="title-en">LALMAI UPOZILA RENT A CAR</div>
-    <div class="subtitle-text">অফিসিয়াল অ্যান্ড্রয়েড মোবাইল অ্যাপ • Official Mobile Application</div>
+    <div class="title-en">Lalmai Upozila Rent A Car</div>
+    <div class="sub-title-bn">অফিসিয়াল অ্যান্ড্রয়েড মোবাইল অ্যাপ্লিকেশন</div>
+    <div class="sub-title-en">Official Mobile Application</div>
   </div>
 
-  <!-- Center QR Card -->
-  <div class="qr-card">
-    <div class="qr-badge">সরাসরি অ্যাপ ডাউনলোড • DOWNLOAD APP</div>
-
-    <div class="qr-box">
+  <!-- Center Card -->
+  <div class="center-card">
+    <div class="qr-frame">
       {qr_svg}
     </div>
 
-    <div class="scan-title-bn">মোবাইল দিয়ে স্ক্যান করুন</div>
-    <div class="scan-title-en">Scan To Download APK Directly</div>
-    <div class="scan-desc">আপনার ফোনের ক্যামেরা দিয়ে কিউআর কোড স্ক্যান করে ইনস্টল করুন</div>
-    <div class="url-box">{URL}</div>
-    <div class="trust-tag">✓ স্থায়ী লিঙ্ক • ✓ অটো আপডেট • ✓ ১০০% নিরাপদ ও ভেরিফাইড</div>
+    <div class="scan-title-en">Scan to Download APK Directly</div>
+    <div class="scan-title-bn">সরাসরি অ্যাপ ডাউনলোড করতে স্ক্যান করুন</div>
+    
+    <div class="scan-desc-en">Point your phone camera or QR scanner at the code</div>
+    <div class="scan-desc-bn">আপনার ফোনের ক্যামেরা অথবা কিউআর স্ক্যানার দিয়ে স্ক্যান করুন</div>
+
+    <div class="link-pill">
+      <span class="link-text">{URL}</span>
+    </div>
   </div>
 
-  <!-- Bottom Helpline -->
-  <div class="bottom-section">
-    <div class="hotline-row">
-      <span class="hl-label">হটলাইন / কল:</span>
-      <span class="hl-val">+880 1711-223344</span>
-    </div>
-    <div class="hotline-row">
-      <span class="hl-label">হোয়াটসঅ্যাপ:</span>
-      <span class="hl-val">+880 1711-223344</span>
-    </div>
-    <div class="loc-text">অফিস: বাগমারা বাজার, লালমাই, কুমিল্লা</div>
+  <!-- Bottom Trust Bar -->
+  <div class="bottom-bar">
+    <div class="trust-bn">✓ স্থায়ী লিঙ্ক • স্বয়ংক্রিয় আপডেট • ১০০% নিরাপদ ও ভেরিফাইড</div>
+    <div class="trust-en">Permanent Link • Auto Updates • Safe & Verified</div>
   </div>
 
 </body>
@@ -648,7 +562,7 @@ def build_rollup_banner(icon_b64, qr_svg):
 def main():
     icon_b64 = get_base64_image(os.path.join(WORKSPACE, "assets", "images", "icon.png"))
     qr_svg_hz = generate_svg_qr(URL, box_size=10)
-    qr_svg_ru = generate_svg_qr(URL, box_size=12)
+    qr_svg_vt = generate_svg_qr(URL, box_size=12)
 
     edge_exe = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
     if not os.path.exists(edge_exe):
@@ -660,12 +574,11 @@ def main():
     hz_html = build_horizontal_banner(icon_b64, qr_svg_hz)
     hz_html_file = os.path.join(WORKSPACE, "temp_banner_hz.html")
     hz_pdf_file = os.path.join(WORKSPACE, "Lalmai_Rent_Car_Banner_Horizontal.pdf")
-    hz_png_file = os.path.join(WORKSPACE, "Lalmai_Rent_Car_Banner_Horizontal.png")
 
     with open(hz_html_file, "w", encoding="utf-8") as f:
         f.write(hz_html)
 
-    print("Generating Horizontal Banner PDF (1200mm x 600mm)...", flush=True)
+    print("Generating Clean Horizontal Banner PDF (1200mm x 600mm)...", flush=True)
     subprocess.run([
         edge_exe,
         "--headless",
@@ -676,61 +589,34 @@ def main():
         f"file:///{hz_html_file.replace(os.sep, '/')}"
     ])
 
-    print("Generating Horizontal Banner PNG preview...", flush=True)
-    subprocess.run([
-        edge_exe,
-        "--headless",
-        "--disable-gpu",
-        f"--user-data-dir={temp_profile}",
-        "--window-size=2400,1200",
-        f"--screenshot={hz_png_file}",
-        f"file:///{hz_html_file.replace(os.sep, '/')}"
-    ])
+    # 2. VERTICAL BANNER (800mm x 1600mm / 2.5ft x 5ft)
+    vt_html = build_vertical_banner(icon_b64, qr_svg_vt)
+    vt_html_file = os.path.join(WORKSPACE, "temp_banner_vt.html")
+    vt_pdf_file = os.path.join(WORKSPACE, "Lalmai_Rent_Car_Banner_Rollup.pdf")
 
-    # 2. ROLLUP BANNER (800mm x 1800mm / 2.5ft x 6ft)
-    ru_html = build_rollup_banner(icon_b64, qr_svg_ru)
-    ru_html_file = os.path.join(WORKSPACE, "temp_banner_ru.html")
-    ru_pdf_file = os.path.join(WORKSPACE, "Lalmai_Rent_Car_Banner_Rollup.pdf")
-    ru_png_file = os.path.join(WORKSPACE, "Lalmai_Rent_Car_Banner_Rollup.png")
+    with open(vt_html_file, "w", encoding="utf-8") as f:
+        f.write(vt_html)
 
-    with open(ru_html_file, "w", encoding="utf-8") as f:
-        f.write(ru_html)
-
-    print("Generating Roll-up Standee Banner PDF (800mm x 1800mm)...", flush=True)
+    print("Generating Clean Vertical Standee Banner PDF (800mm x 1600mm)...", flush=True)
     subprocess.run([
         edge_exe,
         "--headless",
         "--disable-gpu",
         f"--user-data-dir={temp_profile}",
         "--print-to-pdf-no-header",
-        f"--print-to-pdf={ru_pdf_file}",
-        f"file:///{ru_html_file.replace(os.sep, '/')}"
-    ])
-
-    print("Generating Roll-up Standee Banner PNG preview...", flush=True)
-    subprocess.run([
-        edge_exe,
-        "--headless",
-        "--disable-gpu",
-        f"--user-data-dir={temp_profile}",
-        "--window-size=1200,2700",
-        f"--screenshot={ru_png_file}",
-        f"file:///{ru_html_file.replace(os.sep, '/')}"
+        f"--print-to-pdf={vt_pdf_file}",
+        f"file:///{vt_html_file.replace(os.sep, '/')}"
     ])
 
     # Cleanup temp files
     if os.path.exists(hz_html_file):
         os.remove(hz_html_file)
-    if os.path.exists(ru_html_file):
-        os.remove(ru_html_file)
+    if os.path.exists(vt_html_file):
+        os.remove(vt_html_file)
     if os.path.exists(temp_profile):
         shutil.rmtree(temp_profile, ignore_errors=True)
 
-    print("Finished generating banners successfully!", flush=True)
-    if os.path.exists(hz_pdf_file):
-        print(f"Horizontal Banner PDF: {hz_pdf_file} ({os.path.getsize(hz_pdf_file)} bytes)")
-    if os.path.exists(ru_pdf_file):
-        print(f"Roll-up Banner PDF: {ru_pdf_file} ({os.path.getsize(ru_pdf_file)} bytes)")
+    print("Finished generating clean banners successfully!", flush=True)
 
 if __name__ == "__main__":
     main()
