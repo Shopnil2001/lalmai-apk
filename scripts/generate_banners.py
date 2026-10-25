@@ -125,18 +125,18 @@ def build_horizontal_banner(icon_b64, qr_svg):
     }}
 
     .main-title-bn {{
-      font-size: 34mm;
+      font-size: 26mm;
       font-weight: 800;
-      line-height: 1.1;
+      line-height: 1.15;
       color: #FFFFFF;
       text-shadow: 0 4mm 10mm rgba(0, 0, 0, 0.4);
       margin-top: 2mm;
     }}
 
     .main-title-en {{
-      font-size: 20mm;
+      font-size: 16mm;
       font-weight: 900;
-      letter-spacing: 2mm;
+      letter-spacing: 1.5mm;
       color: #93C5FD;
       text-transform: uppercase;
       margin-top: 1mm;
@@ -320,9 +320,9 @@ def build_horizontal_banner(icon_b64, qr_svg):
       <div class="brand-header">
         {"<img src='" + icon_b64 + "' class='app-logo' alt='App Logo' />" if icon_b64 else ""}
         <div>
-          <div class="tagline-pill">লালমাই উপজেলা রেন্ট এ কার সমিতি</div>
-          <div class="main-title-bn">লালমাই রেন্ট কার</div>
-          <div class="main-title-en">LALMAI RENT CAR</div>
+          <div class="tagline-pill">রেন্ট এ কার মালিক ও চালক সমিতি</div>
+          <div class="main-title-bn">লালমাই উপজেলা রেন্ট এ কার</div>
+          <div class="main-title-en">LALMAI UPOZILA RENT A CAR</div>
           <div class="subtitle-row">অফিসিয়াল অ্যান্ড্রয়েড মোবাইল অ্যাপ্লিকেশন • Official Android Application</div>
         </div>
       </div>
@@ -454,17 +454,17 @@ def build_rollup_banner(icon_b64, qr_svg):
     }}
 
     .title-bn {{
-      font-size: 46mm;
+      font-size: 34mm;
       font-weight: 800;
-      line-height: 1.1;
+      line-height: 1.15;
       color: #FFFFFF;
       text-shadow: 0 6mm 15mm rgba(0, 0, 0, 0.5);
     }}
 
     .title-en {{
-      font-size: 26mm;
+      font-size: 20mm;
       font-weight: 900;
-      letter-spacing: 3mm;
+      letter-spacing: 2mm;
       color: #93C5FD;
       text-transform: uppercase;
       margin-top: 3mm;
@@ -607,9 +607,9 @@ def build_rollup_banner(icon_b64, qr_svg):
   <!-- Top Branding -->
   <div class="top-section">
     {"<img src='" + icon_b64 + "' class='app-logo' alt='App Logo' />" if icon_b64 else ""}
-    <div class="tag-pill">লালমাই উপজেলা রেন্ট এ কার সমিতি</div>
-    <div class="title-bn">লালমাই রেন্ট কার</div>
-    <div class="title-en">LALMAI RENT CAR</div>
+    <div class="tag-pill">রেন্ট এ কার মালিক ও চালক সমিতি</div>
+    <div class="title-bn">লালমাই উপজেলা রেন্ট এ কার</div>
+    <div class="title-en">LALMAI UPOZILA RENT A CAR</div>
     <div class="subtitle-text">অফিসিয়াল অ্যান্ড্রয়েড মোবাইল অ্যাপ • Official Mobile Application</div>
   </div>
 

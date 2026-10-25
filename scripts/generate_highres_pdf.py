@@ -97,7 +97,7 @@ def main():
     }}
 
     .title-en {{
-      font-size: 34px;
+      font-size: 28px;
       font-weight: 800;
       letter-spacing: -0.5px;
       line-height: 1.15;
@@ -106,7 +106,7 @@ def main():
     }}
 
     .title-bn {{
-      font-size: 28px;
+      font-size: 24px;
       font-weight: 700;
       color: #EFF6FF;
       margin-top: 4px;
@@ -313,8 +313,8 @@ def main():
       <div class="logo-container">
         {"<img src='" + icon_b64 + "' class='app-icon' alt='App Icon' />" if icon_b64 else ""}
         <div>
-          <div class="title-en">Lalmai Rent Car</div>
-          <div class="title-bn">লালমাই রেন্ট কার</div>
+          <div class="title-en">Lalmai Upozila Rent A Car</div>
+          <div class="title-bn">লালমাই উপজেলা রেন্ট এ কার</div>
         </div>
       </div>
       <div class="subtitle-badge">OFFICIAL ANDROID APPLICATION</div>
