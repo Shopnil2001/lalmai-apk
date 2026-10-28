@@ -18,9 +18,9 @@
         "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "207439717600-ampsmcmpt36fd25jmtr2nbpfg70q2dmi.apps.googleusercontent.com",
         "EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME": "dlc1xc35t",
         "EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET": "LRC-image",
-        "EXPO_PUBLIC_BULKSMSBD_BASE_URL": "http://bulksmsbd.net/api",
+        "EXPO_PUBLIC_BULKSMSBD_BASE_URL": "https://bulksmsbd.net/api",
         "EXPO_PUBLIC_BULKSMSBD_API_KEY": "MRdRS0vWffYPHV3uEkph",
-        "EXPO_PUBLIC_BULKSMSBD_SENDER_ID": "8809612446294"
+        "EXPO_PUBLIC_BULKSMSBD_SENDER_ID": "8809648910550"
       }
     },
     "preview": {
@@ -40,9 +40,9 @@
         "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "207439717600-ampsmcmpt36fd25jmtr2nbpfg70q2dmi.apps.googleusercontent.com",
         "EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME": "dlc1xc35t",
         "EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET": "LRC-image",
-        "EXPO_PUBLIC_BULKSMSBD_BASE_URL": "http://bulksmsbd.net/api",
+        "EXPO_PUBLIC_BULKSMSBD_BASE_URL": "https://bulksmsbd.net/api",
         "EXPO_PUBLIC_BULKSMSBD_API_KEY": "MRdRS0vWffYPHV3uEkph",
-        "EXPO_PUBLIC_BULKSMSBD_SENDER_ID": "8809612446294"
+        "EXPO_PUBLIC_BULKSMSBD_SENDER_ID": "8809648910550"
       }
     },
     "production": {
@@ -61,9 +61,9 @@
         "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "207439717600-ampsmcmpt36fd25jmtr2nbpfg70q2dmi.apps.googleusercontent.com",
         "EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME": "dlc1xc35t",
         "EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET": "LRC-image",
-        "EXPO_PUBLIC_BULKSMSBD_BASE_URL": "http://bulksmsbd.net/api",
+        "EXPO_PUBLIC_BULKSMSBD_BASE_URL": "https://bulksmsbd.net/api",
         "EXPO_PUBLIC_BULKSMSBD_API_KEY": "MRdRS0vWffYPHV3uEkph",
-        "EXPO_PUBLIC_BULKSMSBD_SENDER_ID": "8809612446294"
+        "EXPO_PUBLIC_BULKSMSBD_SENDER_ID": "8809648910550"
       }
     }
   },

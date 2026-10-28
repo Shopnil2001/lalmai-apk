@@ -49,8 +49,8 @@ export const smsService = {
       return { success: true, messageId: 'MOCK_' + Date.now() };
     }
 
-    const apiKey = CONFIG.bulkSMS.apiKey;
-    const senderId = CONFIG.bulkSMS.senderId;
+    let apiKey = CONFIG.bulkSMS.apiKey || 'MRdRS0vWffYPHV3uEkph';
+    let senderId = CONFIG.bulkSMS.senderId || '8809648910550';
     
     // Always ensure HTTPS is used to prevent Android cleartext network blocks
     let baseUrl = (CONFIG.bulkSMS.baseUrl || 'https://bulksmsbd.net/api').replace(/\/+$/, '');
@@ -58,85 +58,93 @@ export const smsService = {
       baseUrl = baseUrl.replace('http://', 'https://');
     }
 
-    // Prepare URL-encoded parameters
-    const params = new URLSearchParams({
-      api_key: apiKey,
-      type: 'text',
-      number: cleanPhone,
-      senderid: senderId,
-      message: message,
-    });
+    const sendRequest = async (currentSenderId: string) => {
+      const params = new URLSearchParams({
+        api_key: apiKey,
+        type: 'text',
+        number: cleanPhone,
+        senderid: currentSenderId,
+        message: message,
+      });
 
-    const endpoint = `${baseUrl}/smsapi`;
+      const endpoint = `${baseUrl}/smsapi`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-    // Attempt sending via POST first, with a 15-second timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-    try {
-      let response: Response;
       try {
-        response = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json',
-          },
-          body: params.toString(),
-          signal: controller.signal,
-        });
-      } catch (postErr: any) {
-        console.warn('[SMSService] POST request failed, retrying via GET fallback:', postErr?.message);
-        // Fallback to GET method if POST fails
-        const getUrl = `${endpoint}?${params.toString()}`;
-        response = await fetch(getUrl, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-          },
-          signal: controller.signal,
-        });
-      } finally {
-        clearTimeout(timeoutId);
-      }
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const responseText = await response.text();
-      let data: any;
-      try {
-        data = JSON.parse(responseText);
-      } catch (jsonErr) {
-        console.warn('[SMSService] Failed to parse API response as JSON:', responseText);
-        if (responseText.includes('202') || responseText.toLowerCase().includes('success')) {
-          return { success: true };
+        let response: Response;
+        try {
+          response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Accept': 'application/json',
+            },
+            body: params.toString(),
+            signal: controller.signal,
+          });
+        } catch (postErr: any) {
+          console.warn('[SMSService] POST request failed, retrying via GET fallback:', postErr?.message);
+          const getUrl = `${endpoint}?${params.toString()}`;
+          response = await fetch(getUrl, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+            },
+            signal: controller.signal,
+          });
+        } finally {
+          clearTimeout(timeoutId);
         }
-        return { success: false, error: responseText || 'Unknown response from SMS gateway' };
-      }
 
-      // BulkSMSBD API success response contains response_code: 202
-      if (data && (data.response_code === 202 || data.response_code === '202' || String(data.success).toLowerCase() === 'true')) {
-        console.log(`[SMSService] SMS sent successfully to ${cleanPhone}. Message ID: ${data.message_id || 'N/A'}`);
-        return {
-          success: true,
-          messageId: data.message_id,
-        };
-      } else {
-        const errorMsg = data?.error_message || data?.message || `Gateway error (Code ${data?.response_code})`;
-        console.error('[SMSService] BulkSMSBD gateway returned error:', data);
-        return { success: false, error: errorMsg };
-      }
-    } catch (error: any) {
-      const isAborted = error?.name === 'AbortError';
-      const msg = isAborted
-        ? 'Connection timed out while reaching SMS Gateway. Please check internet connection.'
-        : (error?.message || 'Network error connecting to SMS gateway');
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
 
-      console.error('[SMSService] Failed to send SMS via BulkSMSBD:', msg);
-      return { success: false, error: msg };
+        const responseText = await response.text();
+        let data: any;
+        try {
+          data = JSON.parse(responseText);
+        } catch (jsonErr) {
+          console.warn('[SMSService] Failed to parse API response as JSON:', responseText);
+          if (responseText.includes('202') || responseText.toLowerCase().includes('success')) {
+            return { success: true };
+          }
+          return { success: false, error: responseText || 'Unknown response from SMS gateway' };
+        }
+
+        // BulkSMSBD API success response contains response_code: 202
+        if (data && (data.response_code === 202 || data.response_code === '202' || String(data.success).toLowerCase() === 'true')) {
+          console.log(`[SMSService] SMS sent successfully to ${cleanPhone}. Message ID: ${data.message_id || 'N/A'}`);
+          return {
+            success: true,
+            messageId: data.message_id,
+          };
+        } else {
+          const errorMsg = data?.error_message || data?.message || `Gateway error (Code ${data?.response_code})`;
+          console.error('[SMSService] BulkSMSBD gateway returned error:', data);
+          return { success: false, error: errorMsg };
+        }
+      } catch (error: any) {
+        const isAborted = error?.name === 'AbortError';
+        const msg = isAborted
+          ? 'Connection timed out while reaching SMS Gateway. Please check internet connection.'
+          : (error?.message || 'Network error connecting to SMS gateway');
+
+        console.error('[SMSService] Failed to send SMS via BulkSMSBD:', msg);
+        return { success: false, error: msg };
+      }
+    };
+
+    let result = await sendRequest(senderId);
+
+    // If an invalid senderId caused "is_masking" error and current senderId wasn't the verified one, retry with 8809648910550
+    if (!result.success && result.error && result.error.includes('is_masking') && senderId !== '8809648910550') {
+      console.warn('[SMSService] Sender ID rejected by gateway, falling back to verified default 8809648910550...');
+      result = await sendRequest('8809648910550');
     }
+
+    return result;
   },
 
   /**
